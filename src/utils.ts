@@ -45,15 +45,20 @@ export function on(node: HTMLElement, eventName: string, callback: EventListener
 }
 
  
-export function useListener(node: HTMLElement, eventName: string, callback: EventListenerOrEventListenerObject, useCapture: boolean, deps?: any[]) { 
+export function useListener(node: HTMLElement, eventName: string, callback: EventListenerOrEventListenerObject, useCapture: boolean, condition: boolean) { 
   useEffect(() => {
-    if (node.addEventListener) {
+    const shouldCall = condition && node && node.addEventListener;
+
+    if (shouldCall) {
         node.addEventListener(eventName, callback, useCapture || false);
     }
     return () => {
-        node.removeEventListener(eventName, callback, useCapture || false);
+        if (shouldCall) {
+            node.removeEventListener(eventName, callback, useCapture || false);
+        }
     }
-  }, deps)
+  }, [condition])
   
   return;
 }
+

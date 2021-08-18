@@ -84,7 +84,7 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
   let placement = oplacement;
 
   const { width: twidth, height: theight, left: tleft, top: ttop } = target.getBoundingClientRect();
-  const { width: cwidth, height: cheight, left: cleft, top: ctop } = document.body.getBoundingClientRect()
+  const { width: cwidth, height: cheight, left: cleft, top: ctop } = document.documentElement.getBoundingClientRect()
   const { width: owidth, height: oheight } = overlay.getBoundingClientRect();
 
   function getXY(p: placementType | undefined) {

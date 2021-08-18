@@ -1,11 +1,14 @@
-import * as React from 'react';
-import * as ReactDOM from 'react-dom';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { CSSProperties, ReactElement } from 'react';
+
+import ReactDOM from 'react-dom';
 
 import getPlacements, { pointsType } from './placement';
 import { useListener } from './utils';
 
-export interface OverlayEvent extends Event {
+export interface OverlayEvent extends MouseEvent, KeyboardEvent {
   target: EventTarget | null;
+  targetType: string;
 }
 
 export interface OverlayProps {
@@ -37,17 +40,25 @@ export interface OverlayProps {
    * 是否显示
    */
   visible?: boolean;
-  onClose?: (event: OverlayEvent) => void;
+  onRequestClose?: (event: OverlayEvent) => void;
   /**
-   * Optional click handler
+   * 是否展示遮罩	
    */
-  onClick?: () => void;
+  hasMask?: boolean;
+  /**
+   * 点击遮罩区域是否关闭弹层，显示遮罩时生效	
+   */
+  canCloseByMask?: boolean;
+  maskStyle?: CSSProperties;
   className?: string;
   /**
    * 弹窗内容
    */
-  children?: React.ReactNode;
-  style?: object;
+  children?: ReactElement;
+  style?: CSSProperties;
+  safeNode?: () => Element | Array<() => Element>;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
 }
 
 /**
@@ -63,19 +74,23 @@ const Overlay = (props: OverlayProps) => {
     points,
     offset,
     fixed,
-    onClose = () => { },
+    onRequestClose = () => { },
     container = body,
     style = {},
     placement,
     placementOffset,
+    hasMask,
+    canCloseByMask,
+    safeNode,
     ...others
   } = props;
 
   const position = fixed ? 'fixed' : 'absolute';
-  const [positionStyle, setPositionStyle] = React.useState<React.CSSProperties>({ position });
-  const [overlayNode, setOverlayNode] = React.useState<any>(null);
+  const [positionStyle, setPositionStyle] = useState<CSSProperties>({ position });
+  const [overlayNode, setOverlayNode] = useState<any>(null);
+  const maskRef = useRef(null);
 
-  const overlayRefCallback = React.useCallback((node) => {
+  const overlayRefCallback = useCallback((node) => {
     setOverlayNode(node);
 
     if (typeof target === 'function' && node !== null) {
@@ -86,34 +101,73 @@ const Overlay = (props: OverlayProps) => {
   }, []);
 
   const clickEvent = (e: OverlayEvent) => {
+    console.log(visible)
     if (!visible) {
       return;
     }
 
-    if (typeof target === 'function') {
-      const targetNode = target();
+    // 点击遮罩关闭
+    if (hasMask && canCloseByMask && maskRef && maskRef.current === e.target) {
+      onRequestClose(e);
+      return;
+    }
 
-      if (targetNode && (targetNode === e.target || targetNode.contains(e.target))) {
+    const safeNodeList = Array.isArray(safeNode) ? safeNode : (typeof safeNode === 'function' ? [safeNode] : []);
+
+    // 点击弹层不关闭
+    if (overlayNode) {
+      safeNodeList.push(() => overlayNode);
+    }
+
+    for (let i = 0; i < safeNodeList.length; i++) {
+      const node = typeof safeNodeList[i] === 'function' ? safeNodeList[i]() : null;
+      console.log(node)
+      if (node && (node === e.target || node.contains(e.target as Node))) {
         return;
       }
     }
 
-    if (overlayNode && (overlayNode === e.target || overlayNode.contains(e.target))) {
-      return;
-    }
+    // 点击相对目标不关闭
+    // if (typeof target === 'function') {
+    //   const targetNode = target();
 
-    onClose(e);
+    //   // 相对目标
+    //   if (targetNode && (targetNode === e.target || targetNode.contains(e.target))) {
+    //     return;
+    //   }
+    // }
+
+    onRequestClose(e);
   }
 
-  useListener(document.body, 'click', clickEvent, false, [visible, overlayNode]);
+  // console.log(/app/, visible, overlayNode)
+  useListener(document.body, 'click', clickEvent, false, !!(visible && overlayNode));
+
+  useEffect(() => {
+    const originStyle = document.body.getAttribute('style');
+    if (visible && hasMask) {
+      document.body.setAttribute('style', 'overflow: hidden;');
+    }
+    return () => {
+      document.body.setAttribute('style', originStyle);
+    }
+  }, [visible, hasMask]);
 
   if (!visible) {
     return null;
   }
 
-  const content = <div {...others} className={className} ref={overlayRefCallback} style={{ ...positionStyle, ...style }} >
-    {children}
-  </div>;
+  const maskProps = {
+    className: 'next-overlay-mask',
+    // onClick: canCloseByMask? onRequestClose
+  }
+
+  const content = (<div>
+    {hasMask ? <div {...maskProps} ref={maskRef}></div> : null}
+    <div {...others} className={className} ref={overlayRefCallback} style={{ ...positionStyle, ...style }} >
+      {children}
+    </div>
+  </div>);
 
   return ReactDOM.createPortal(
     content,
