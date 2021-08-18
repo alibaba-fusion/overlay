@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { CSSProperties, ReactElement } from 'react';
 
 import Overlay, { OverlayEvent } from './overlay';
+import { makeChain } from './utils';
 
 type TriggerType = 'click' | 'hover' | 'focus';
 export type TriggerTypes = Array<TriggerType>;
@@ -79,7 +80,19 @@ const Popup = (props: PopupProps) => {
 
   const [visible, setVisible] = useState(defaultVisible || props.visible);
   const triggerRef = useRef(null);
-  const mouseTimer = useRef(null);
+  const mouseLeaveTimer = useRef(null);
+  const mouseEnterTimer = useRef(null);
+
+  const child = React.Children.only(children);
+  if (typeof (child as any).ref === 'string') {
+    throw new Error('Can not set ref by string in Overlay, use function instead.');
+  }
+
+  const triggerCallback = useCallback((ref) => {
+    triggerRef.current = ref;
+    // @ts-ignore
+    child && typeof child.ref === 'function' && child.ref(ref);
+  }, [])
 
   useEffect(() => {
     if ('visible' in props) {
@@ -98,7 +111,6 @@ const Popup = (props: PopupProps) => {
   const handleClick = (e: OverlayEvent) => {
     e.targetType = 'trigger';
     handleVisibleChange(true, e);
-    onClick && onClick(e);
   }
 
   const handleKeyDown = (e: OverlayEvent) => {
@@ -108,90 +120,83 @@ const Popup = (props: PopupProps) => {
       e.targetType = 'trigger';
       handleVisibleChange(true, e);
     }
-
-    onKeyDown && onKeyDown(e);
   }
 
-  const handleMouseEnter = (callback: Function, targetType: string) => {
+  const handleMouseEnter = (targetType: string) => {
     return (e: OverlayEvent) => {
-      if (mouseTimer.current) {
-        clearTimeout(mouseTimer.current);
-        mouseTimer.current = null;
+      if (mouseLeaveTimer.current && visible) {
+        clearTimeout(mouseLeaveTimer.current);
+        mouseLeaveTimer.current = null;
         return;
       }
 
-      e.targetType = targetType;
-      handleVisibleChange(true, e);
-      typeof callback === 'function' && callback(e);
+      if (!mouseEnterTimer.current && !visible) {
+        mouseEnterTimer.current = setTimeout(() => {
+          e.targetType = targetType;
+          handleVisibleChange(true, e);
+          mouseEnterTimer.current = null;
+        }, delay);
+      }
     }
   }
 
-  const handleMouseLeave = (callback: Function, targetType: string) => {
+  const handleMouseLeave = (targetType: string) => {
     return (e: OverlayEvent) => {
-      if (!mouseTimer.current) {
-        mouseTimer.current = setTimeout(() => {
+      if (!mouseLeaveTimer.current && visible) {
+        mouseLeaveTimer.current = setTimeout(() => {
           e.targetType = targetType;
           handleVisibleChange(false, e);
-          mouseTimer.current = null;
+          mouseLeaveTimer.current = null;
         }, delay);
       }
-      typeof callback === 'function' && callback(e);
+
+      if (mouseEnterTimer.current && !visible) {
+        clearTimeout(mouseEnterTimer.current);
+        mouseEnterTimer.current = null;
+      }
     }
   }
 
   const handleFocus = (e: OverlayEvent) => {
     e.targetType = 'trigger';
     handleVisibleChange(true, e);
-    onFocus && onFocus(e);
   }
   const handleBlur = (e: OverlayEvent) => {
     e.targetType = 'trigger';
     handleVisibleChange(false, e);
-    onBlur && onBlur(e);
   }
 
-  const triggerProps: any = {};
+  const triggerProps: any = {
+    ref: triggerCallback
+  };
   const overlayOtherProps: any = {}
 
   const triggerTypeList: TriggerTypes = typeof triggerType === 'string' ? [triggerType] : triggerType;
-
   triggerTypeList.forEach(t => {
     switch (t) {
       case 'click':
-        triggerProps.onClick = handleClick;
-        triggerProps.onKeyDown = handleKeyDown;
+        triggerProps.onClick = makeChain(handleClick, onClick);
+        triggerProps.onKeyDown = makeChain(handleKeyDown, onKeyDown);
         break;
       case 'hover':
-        triggerProps.onMouseEnter = handleMouseEnter(onMouseEnter, 'trigger');
-        triggerProps.onMouseLeave = handleMouseLeave(onMouseLeave, 'trigger');
-        overlayOtherProps.onMouseEnter = handleMouseEnter(overlayProps.onMouseEnter, 'overlay');
-        overlayOtherProps.onMouseLeave = handleMouseLeave(overlayProps.onMouseLeave, 'overlay');
+        triggerProps.onMouseEnter = makeChain(handleMouseEnter('trigger'), onMouseEnter);
+        triggerProps.onMouseLeave = makeChain(handleMouseLeave('trigger'), onMouseLeave);
+        overlayOtherProps.onMouseEnter = makeChain(handleMouseEnter('overlay'), overlayProps.onMouseEnter);
+        overlayOtherProps.onMouseLeave = makeChain(handleMouseLeave('overlay'), overlayProps.onMouseLeave);
         break;
       case 'focus':
-        triggerProps.onFocus = handleFocus;
-        triggerProps.onBlur = handleBlur;
+        triggerProps.onFocus = makeChain(handleFocus, onFocus);
+        triggerProps.onBlur = makeChain(handleBlur, onBlur);
         break;
     }
-  })
-
-  triggerProps.ref = (ref: any) => {
-    triggerRef.current = ref;
-    // @ts-ignore
-    typeof children.ref === 'function' && children.ref(ref);
-  }
-
-  const triggerEl = React.cloneElement(children, triggerProps);
-
-  const getContainer = () => {
-    return container(triggerRef.current);
-  }
+  });
 
   return <>
-    {triggerEl}
+    {React.cloneElement(child, triggerProps)}
     <Overlay
       {...others}
       {...overlayOtherProps}
-      container={getContainer}
+      container={() => container(triggerRef.current)}
       safeNode={safeNode}
       visible={visible}
       target={() => triggerRef.current}

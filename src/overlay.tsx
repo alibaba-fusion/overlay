@@ -17,7 +17,7 @@ export interface OverlayProps {
    */
   target?: Function;
 
-  container?: () => Element;
+  container?: () => HTMLElement;
 
   placement?: 'topLeft' | 'top' | 'topRight' | 'left' | 'right' | 'bottom' | 'bottomLeft' | 'bottomRight' | 'leftTop' | 'leftBottom' | 'rightTop' | 'rightBottom';
   /**
@@ -61,9 +61,6 @@ export interface OverlayProps {
   onMouseLeave?: () => void;
 }
 
-/**
- * Primary UI component for user interaction
- */
 const Overlay = (props: OverlayProps) => {
   const body = () => document.body;
   const {
@@ -90,18 +87,32 @@ const Overlay = (props: OverlayProps) => {
   const [overlayNode, setOverlayNode] = useState<any>(null);
   const maskRef = useRef(null);
 
+  const child = React.Children.only(children);
+  if (typeof (child as any).ref === 'string') {
+    throw new Error('Can not set ref by string in Overlay, use function instead.');
+  }
+
   const overlayRefCallback = useCallback((node) => {
     setOverlayNode(node);
+    //@ts-ignore
+    child && typeof child.ref === 'function' && child.ref(node);
 
     if (typeof target === 'function' && node !== null) {
-      const { style } = getPlacements({ target: target(), overlay: node, points, offset, position, placementOffset, placement });
+      const { style } = getPlacements({ 
+        target: target(), 
+        overlay: node, 
+        container: container(),
+        points, offset, 
+        position, 
+        placement,
+        placementOffset
+      });
+      console.log(style)
       setPositionStyle(style)
     }
-
   }, []);
 
   const clickEvent = (e: OverlayEvent) => {
-    console.log(visible)
     if (!visible) {
       return;
     }
@@ -121,21 +132,10 @@ const Overlay = (props: OverlayProps) => {
 
     for (let i = 0; i < safeNodeList.length; i++) {
       const node = typeof safeNodeList[i] === 'function' ? safeNodeList[i]() : null;
-      console.log(node)
       if (node && (node === e.target || node.contains(e.target as Node))) {
         return;
       }
     }
-
-    // 点击相对目标不关闭
-    // if (typeof target === 'function') {
-    //   const targetNode = target();
-
-    //   // 相对目标
-    //   if (targetNode && (targetNode === e.target || targetNode.contains(e.target))) {
-    //     return;
-    //   }
-    // }
 
     onRequestClose(e);
   }
@@ -162,11 +162,15 @@ const Overlay = (props: OverlayProps) => {
     // onClick: canCloseByMask? onRequestClose
   }
 
-  const content = (<div>
+  const newChildren = React.cloneElement(child, {
+    ...others,
+    ref: overlayRefCallback,
+    style: { ...child.props.style, ...positionStyle }
+  });
+
+  const content = (<div className={className}>
     {hasMask ? <div {...maskProps} ref={maskRef}></div> : null}
-    <div {...others} className={className} ref={overlayRefCallback} style={{ ...positionStyle, ...style }} >
-      {children}
-    </div>
+    {newChildren}
   </div>);
 
   return ReactDOM.createPortal(

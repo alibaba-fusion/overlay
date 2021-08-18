@@ -8,6 +8,7 @@ export interface PlacementsConfig {
   position: 'absolute' | 'fixed';
   target: HTMLElement;
   overlay: HTMLElement;
+  container: HTMLElement;
   /**
    * 弹窗 overlay 相对于目标元素 target 的位置
    */
@@ -64,6 +65,7 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
   const {
     target,
     overlay,
+    container,
     placement: oplacement,
     placementOffset = 0,
     points: opoints = ['tl', 'bl'],
@@ -84,7 +86,7 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
   let placement = oplacement;
 
   const { width: twidth, height: theight, left: tleft, top: ttop } = target.getBoundingClientRect();
-  const { width: cwidth, height: cheight, left: cleft, top: ctop } = document.documentElement.getBoundingClientRect()
+  const { width: cwidth, height: cheight, left: cleft, top: ctop } = container.getBoundingClientRect()
   const { width: owidth, height: oheight } = overlay.getBoundingClientRect();
 
   function getXY(p: placementType | undefined) {

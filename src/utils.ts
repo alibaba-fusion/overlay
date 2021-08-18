@@ -62,3 +62,48 @@ export function useListener(node: HTMLElement, eventName: string, callback: Even
   return;
 }
 
+/**
+ * 将N个方法合并为一个链式调用的方法
+ * @return {Function}     合并后的方法
+ *
+ * @example
+ * func.makeChain(this.handleChange, this.props.onChange);
+ */
+ export function makeChain(...fns: any[]) {
+    if (fns.length === 1) {
+        return fns[0];
+    }
+
+    return (...args: any[]) => {
+        for (let i = 0, j = fns.length; i < j; i++) {
+            if (fns[i] && fns[i].apply) {
+                //@ts-ignore
+                fns[i].apply(this, args);
+            }
+        }
+    };
+}
+
+function getStyle(elt: Element, name: string) {
+    const style = window.getComputedStyle(elt, null)
+
+    return style.getPropertyValue(name);
+}
+
+
+export const getContainer = (container: Element) => {
+    if (typeof document === undefined) {
+        return container;
+    }
+
+    let calcContainer: Element = container;
+  
+    while (getStyle(calcContainer, 'position') === 'static') {
+        if (!calcContainer || calcContainer === document.body) {
+            return document.body;
+        }
+        calcContainer = calcContainer.parentNode as Element;
+    }
+  
+    return calcContainer;
+  };
