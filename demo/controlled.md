@@ -1,23 +1,29 @@
-# 触发的弹层受控显示隐藏
-
-- order: 3
-
-展示了 Popup 受控显示隐藏的用法。
-
-:::lang=en-us
-# Popup under control
-
-- order: 3
-
-Demos Popup under control usage.
-:::
-
+---
+title: 受控显示隐藏
+order: 4
 ---
 
-````jsx
+展示了 `Popup` 受控显示隐藏的用法。
+
+```jsx
 import Overlay from '@alifd/overlay';
 
 const { Popup } = Overlay;
+
+const style = {
+    width: 300,
+    height: 100,
+    padding: 10,
+    background: '#fff',
+    borderRadius: 2,
+    boxShadow: '2px 2px 20px rgba(0, 0, 0, 0.15)'
+}
+
+const DemoOverlay = React.forwardRef((props, ref) => {
+    return <span {...props} style={{...style, ...props.style}} ref={ref}>
+    Hello World From Popup!
+</span>
+})
 
 class Demo extends React.Component {
     constructor(props) {
@@ -44,34 +50,31 @@ class Demo extends React.Component {
         return (
             <div>
                 <div>
-                    <Popup trigger={<button>Open</button>}
+                    <Popup 
+                        overlay={<DemoOverlay/>}
                         triggerType="click"
                         visible={this.state.visible}
                         onVisibleChange={this.onVisibleChange}>
-                        <span className="overlay-demo">
-                            Hello World From Popup!
-                        </span>
+                        <button>Open</button>
                     </Popup>
                 </div>
                 <br />
                 <div>
-                    <Popup trigger={<button style={{"margin-right": "50px"}} ref={ref => {this.btn1 = ref;}}>Paired Popup 1</button>}
+                    <Popup 
+                        overlay={<DemoOverlay ref={ref => {this.overlay1 = ref}}/>}
                         triggerType="click"
                         visible={this.state.groupVisible}
-                        safeNode={[() => this.btn2, () => this.overlay2]}
+                        safeNode={[() => this.btn1, () => this.overlay2]}
                         onVisibleChange={this.onGroupVisibleChange}>
-                        <span className="overlay-demo" ref={ref => {this.overlay1 = ref;}}>
-                            Hello World From Popup!
-                        </span>
+                        <button style={{"marginRight": "50px"}} ref={ref => {this.btn1 = ref;}}>Paired Popup 1</button>
                     </Popup>
-                    <Popup trigger={<button ref={ref => {this.btn2 = ref;}}>Paired Popup 2</button>}
+                    <Popup 
+                        overlay={<DemoOverlay ref={ref => {this.overlay2 = ref}}/>}
                         triggerType="click"
                         visible={this.state.groupVisible}
                         safeNode={[() => this.btn1, () => this.overlay1]}
-                        onVisibleChange={this.onGroupVisibleChange}>                  
-                        <span className="overlay-demo" ref={ref => {this.overlay2 = ref;}}>
-                            Hello World From Popup!
-                        </span>
+                        onVisibleChange={this.onGroupVisibleChange}>
+                        <button ref={ref => {this.btn2 = ref;}}>Paired Popup 2</button>
                     </Popup>
                 </div>
             </div>
@@ -80,15 +83,4 @@ class Demo extends React.Component {
 }
 
 ReactDOM.render(<Demo />, mountNode);
-````
-
-````css
-.overlay-demo {
-    width: 300px;
-    height: 100px;
-    padding: 10px;
-    border: 1px solid #999999;
-    background: #FFFFFF;
-    box-shadow: 2px 2px 20px rgba(0,0,0,0.15);
-}
-````
+```

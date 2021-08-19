@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useCallback, useRef } from 'react'
 
 export interface onReturn {
     off: Function
@@ -44,22 +44,21 @@ export function on(node: HTMLElement, eventName: string, callback: EventListener
     };
 }
 
- 
-export function useListener(node: HTMLElement, eventName: string, callback: EventListenerOrEventListenerObject, useCapture: boolean, condition: boolean) { 
-  useEffect(() => {
-    const shouldCall = condition && node && node.addEventListener;
 
-    if (shouldCall) {
-        node.addEventListener(eventName, callback, useCapture || false);
-    }
-    return () => {
-        if (shouldCall) {
-            node.removeEventListener(eventName, callback, useCapture || false);
+export function useListener(node: HTMLElement, eventName: string, callback: EventListenerOrEventListenerObject, useCapture: boolean, condition: boolean) {
+    useEffect(() => {
+        if (condition && node && node.addEventListener) {
+            node.addEventListener(eventName, callback, useCapture || false);
+
+            return () => {
+                node.removeEventListener(eventName, callback, useCapture || false);
+            }
         }
-    }
-  }, [condition])
-  
-  return;
+
+        return null;
+    }, [condition])
+
+    return;
 }
 
 /**
@@ -69,7 +68,7 @@ export function useListener(node: HTMLElement, eventName: string, callback: Even
  * @example
  * func.makeChain(this.handleChange, this.props.onChange);
  */
- export function makeChain(...fns: any[]) {
+export function makeChain(...fns: any[]) {
     if (fns.length === 1) {
         return fns[0];
     }
@@ -84,26 +83,52 @@ export function useListener(node: HTMLElement, eventName: string, callback: Even
     };
 }
 
-function getStyle(elt: Element, name: string) {
+export const getContainer = (container: HTMLElement) => {
+    if (typeof document === undefined) {
+        return container;
+    }
+
+    let calcContainer: HTMLElement = container;
+
+    while (getStyle(calcContainer, 'position') === 'static') {
+        if (!calcContainer || calcContainer === document.body) {
+            return document.body;
+        }
+        calcContainer = calcContainer.parentNode as HTMLElement;
+    }
+
+    return calcContainer;
+};
+
+export function getStyle(elt: Element, name: string) {
     const style = window.getComputedStyle(elt, null)
 
     return style.getPropertyValue(name);
 }
 
-
-export const getContainer = (container: Element) => {
-    if (typeof document === undefined) {
-        return container;
+export function setStyle(node: HTMLElement, name: string | { [key: string]: unknown }, value: string) {
+    if (!node) {
+        return;
     }
 
-    let calcContainer: Element = container;
-  
-    while (getStyle(calcContainer, 'position') === 'static') {
-        if (!calcContainer || calcContainer === document.body) {
-            return document.body;
+    if (typeof name === 'string') {
+        //@ts-ignore
+        node.style[name] = value;
+    } else if (typeof name === 'object' && arguments.length === 2) {
+        //@ts-ignore
+        Object.keys(name).forEach(key => setStyle(node, key, name[key]));
+    }
+}
+
+export function throttle(func: Function, wait: number) {
+    let previous = 0;
+    return function () {
+        let now = Date.now();
+        let args = arguments;
+        if (now - previous > wait) {
+            //@ts-ignore
+            func.apply(this, args);
+            previous = now;
         }
-        calcContainer = calcContainer.parentNode as Element;
     }
-  
-    return calcContainer;
-  };
+}

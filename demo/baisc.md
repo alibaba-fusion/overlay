@@ -1,21 +1,11 @@
-
-# 遮罩
-
-- order: 1
-
-带有遮罩的弹层。
-
-:::lang=en-us
-# Mask
-
-- order: 1
-
-The overlay with mask.
-:::
-
+---
+title: Overlay
+order: 0
 ---
 
-````jsx
+Overlay 使用。
+
+```jsx
 import Overlay from '@alifd/overlay';
 
 class Demo extends React.Component {
@@ -29,7 +19,7 @@ class Demo extends React.Component {
 
     onClick = () => {
         this.setState({
-            visible: true
+            visible: !this.state.visible
         });
     }
 
@@ -45,17 +35,21 @@ class Demo extends React.Component {
                 <button onClick={this.onClick} ref={ref => {
                     this.btn = ref;
                 }}>
-                    Open
+                    Toggle visible
                 </button>
-                <Overlay visible={this.state.visible}
+                <Overlay 
+                    visible={this.state.visible}
+                    target={() => this.btn}
                     safeNode={() => this.btn}
-                    align="cc cc"
-                    hasMask
-                    disableScroll
-                    onRequestClose={this.onClose}>
-                    <span className="overlay-demo">
-                        Hello World From Overlay!
-                    </span>
+                    onRequestClose={this.onClose}
+                    >
+                    <div style={{
+                        width: 200,
+                        height: 200,
+                        background: '#999',
+                        borderRadius: 2,
+                        boxShadow: '0 3px 6px -4px #0000001f, 0 6px 16px #00000014, 0 9px 28px 8px #0000000d'
+                    }} />
                 </Overlay>
             </div>
         );
@@ -63,15 +57,4 @@ class Demo extends React.Component {
 }
 
 ReactDOM.render(<Demo />, mountNode);
-````
-
-````css
-.overlay-demo {
-    width: 300px;
-    height: 100px;
-    padding: 10px;
-    border: 1px solid #999999;
-    background: #FFFFFF;
-    box-shadow: 2px 2px 20px rgba(0,0,0,0.15);
-}
-````
+```

@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { CSSProperties, ReactElement } from 'react';
-
+import ResizeObserver from 'resize-observer-polyfill';
 import ReactDOM from 'react-dom';
 
 import getPlacements, { pointsType } from './placement';
-import { useListener } from './utils';
+import { useListener, getStyle, setStyle, getContainer, throttle } from './utils';
 
 export interface OverlayEvent extends MouseEvent, KeyboardEvent {
   target: EventTarget | null;
@@ -15,7 +15,7 @@ export interface OverlayProps {
   /**
    * 弹窗定位的参考元素
    */
-  target?: Function;
+  target?: Function | string;
 
   container?: () => HTMLElement;
 
@@ -84,31 +84,43 @@ const Overlay = (props: OverlayProps) => {
 
   const position = fixed ? 'fixed' : 'absolute';
   const [positionStyle, setPositionStyle] = useState<CSSProperties>({ position });
-  const [overlayNode, setOverlayNode] = useState<any>(null);
+  const [overlayNode, setOverlayNode] = useState<HTMLElement>(null);
   const maskRef = useRef(null);
+  const observerTimer = useRef(null);
 
   const child = React.Children.only(children);
   if (typeof (child as any).ref === 'string') {
     throw new Error('Can not set ref by string in Overlay, use function instead.');
   }
 
+  // 弹窗挂载
   const overlayRefCallback = useCallback((node) => {
     setOverlayNode(node);
     //@ts-ignore
     child && typeof child.ref === 'function' && child.ref(node);
 
-    if (typeof target === 'function' && node !== null) {
-      const { style } = getPlacements({ 
-        target: target(), 
-        overlay: node, 
-        container: container(),
-        points, offset, 
-        position, 
-        placement,
-        placementOffset
-      });
-      console.log(style)
-      setPositionStyle(style)
+    if (node !== null) {
+      const containerNode =  getContainer(container());
+      const targetNode = (typeof target === 'string' ? () => document.getElementById(target) : target)();
+
+      const updateOverlayPosition = throttle(() => {
+        if (!node || !containerNode || !targetNode) {
+          return;
+        }
+        const { style } = getPlacements({
+          target: targetNode,
+          overlay: node,
+          container: containerNode,
+          points, offset,
+          position,
+          placement,
+          placementOffset
+        });
+        setPositionStyle(style);
+      }, 100);
+      
+      const ro = new ResizeObserver(updateOverlayPosition);
+      ro.observe(containerNode);
     }
   }, []);
 
@@ -140,26 +152,37 @@ const Overlay = (props: OverlayProps) => {
     onRequestClose(e);
   }
 
-  // console.log(/app/, visible, overlayNode)
   useListener(document.body, 'click', clickEvent, false, !!(visible && overlayNode));
 
   useEffect(() => {
-    const originStyle = document.body.getAttribute('style');
     if (visible && hasMask) {
-      document.body.setAttribute('style', 'overflow: hidden;');
+      const originStyle = document.body.getAttribute('style');
+      setStyle(document.body, 'overflow', 'hidden');
+      return () => {
+        document.body.setAttribute('style', originStyle || '');
+      }
     }
-    return () => {
-      document.body.setAttribute('style', originStyle);
+
+    if (visible && !fixed) {
+      if (getStyle(document.body, 'position') === 'static') {
+        const originStyle = document.body.getAttribute('style');
+        setStyle(document.body, 'position', 'relative');
+        return () => {
+          document.body.setAttribute('style', originStyle || '');
+        }
+      }
     }
-  }, [visible, hasMask]);
+
+    return null;
+
+  }, [visible && hasMask, visible && !fixed]);
 
   if (!visible) {
     return null;
   }
 
   const maskProps = {
-    className: 'next-overlay-mask',
-    // onClick: canCloseByMask? onRequestClose
+    className: 'next-overlay-mask'
   }
 
   const newChildren = React.cloneElement(child, {
@@ -168,7 +191,7 @@ const Overlay = (props: OverlayProps) => {
     style: { ...child.props.style, ...positionStyle }
   });
 
-  const content = (<div className={className}>
+  const content = (<div className={className} >
     {hasMask ? <div {...maskProps} ref={maskRef}></div> : null}
     {newChildren}
   </div>);

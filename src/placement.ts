@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { CSSProperties } from 'react';
 
 type point = 'tl' | 'tc' | 'tr' | 'cl' | 'cc' | 'cr' | 'bl' | 'bc' | 'br';
 export type pointsType = [point, point];
@@ -58,7 +58,7 @@ export interface placementStyleType {
   config?: {
     placement: placementType | undefined;
   },
-  style: React.CSSProperties
+  style: CSSProperties
 }
 
 export default function getPlacements(config: PlacementsConfig): placementStyleType {
@@ -85,13 +85,25 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
 
   let placement = oplacement;
 
+  /**
+   * 可视窗口是浏览器给用户展示的窗口
+   * top: 元素上边  距离可视窗口 上边框的距离
+   * left: 元素左边 距离可视窗口 左边框的距离
+   * 
+   * scrollTop: 容器上下滚动距离
+   * scrollLeft: 容器左右滚动距离
+   */
   const { width: twidth, height: theight, left: tleft, top: ttop } = target.getBoundingClientRect();
-  const { width: cwidth, height: cheight, left: cleft, top: ctop } = container.getBoundingClientRect()
+  const { width: cwidth, height: cheight, left: cleft, top: ctop } = container.getBoundingClientRect();
+  const { scrollTop: cscrollTop, scrollLeft: cscrollLeft } = container;
   const { width: owidth, height: oheight } = overlay.getBoundingClientRect();
 
+  // console.log(target.getBoundingClientRect())
+  // console.log(container, container.getBoundingClientRect())
+
   function getXY(p: placementType | undefined) {
-    let basex = tleft - cleft;
-    let basey = ttop - ctop;
+    let basex = tleft - cleft + cscrollLeft;
+    let basey = ttop - ctop + cscrollTop;
 
     let points = opoints;
     if (p && p in placementMap) {
@@ -201,7 +213,7 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
     if (placement !== nplacement) {
       let { left: nleft, top: ntop } = getXY(nplacement);
 
-      if (shouldResizePlacement(nleft ,ntop)) {
+      if (shouldResizePlacement(nleft, ntop)) {
         const nnplacement = getNewPlacement(nleft, ntop, nplacement);
         // step3: 空间依然不够，说明xy轴至少有一个方向是怎么更换位置都不够的。停止计算开始补偿逻辑
         if (nplacement !== nnplacement) {
@@ -219,7 +231,7 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
           if (nnleft + owidth > cwidth) {
             nnleft = cwidth - owidth;
           }
-          
+
           placement = nnplacement;
           left = nnleft;
           top = nntop;
