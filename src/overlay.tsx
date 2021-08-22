@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { CSSProperties, ReactElement } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import ReactDOM from 'react-dom';
-
 import getPlacements, { pointsType } from './placement';
 import { useListener, getStyle, setStyle, getContainer, throttle } from './utils';
 
@@ -49,8 +48,10 @@ export interface OverlayProps {
    * 点击遮罩区域是否关闭弹层，显示遮罩时生效	
    */
   canCloseByMask?: boolean;
+  wrapperClassName?: string;
+  maskClassName?: string;
   maskStyle?: CSSProperties;
-  className?: string;
+
   /**
    * 弹窗内容
    */
@@ -67,7 +68,9 @@ const Overlay = (props: OverlayProps) => {
     target = body,
     visible = false,
     children,
-    className,
+    wrapperClassName,
+    maskClassName,
+    maskStyle,
     points,
     offset,
     fixed,
@@ -86,7 +89,6 @@ const Overlay = (props: OverlayProps) => {
   const [positionStyle, setPositionStyle] = useState<CSSProperties>({ position });
   const [overlayNode, setOverlayNode] = useState<HTMLElement>(null);
   const maskRef = useRef(null);
-  const observerTimer = useRef(null);
 
   const child = React.Children.only(children);
   if (typeof (child as any).ref === 'string') {
@@ -163,26 +165,29 @@ const Overlay = (props: OverlayProps) => {
       }
     }
 
-    if (visible && !fixed) {
-      if (getStyle(document.body, 'position') === 'static') {
-        const originStyle = document.body.getAttribute('style');
-        setStyle(document.body, 'position', 'relative');
-        return () => {
-          document.body.setAttribute('style', originStyle || '');
+    return undefined;
+  }, [visible && hasMask]);
+
+  useEffect(() => {
+    if (visible && !fixed && overlayNode) {
+      const containerNode =  getContainer(container());
+      if (containerNode === document.body) {
+        if (getStyle(document.body, 'position') === 'static') {
+          const originStyle = document.body.getAttribute('style');
+          setStyle(document.body, 'position', 'relative');
+          return () => {
+            document.body.setAttribute('style', originStyle || '');
+          }
         }
       }
     }
 
-    return null;
+    return undefined;
+  }, [visible && !fixed && overlayNode])
 
-  }, [visible && hasMask, visible && !fixed]);
 
   if (!visible) {
     return null;
-  }
-
-  const maskProps = {
-    className: 'next-overlay-mask'
   }
 
   const newChildren = React.cloneElement(child, {
@@ -191,8 +196,8 @@ const Overlay = (props: OverlayProps) => {
     style: { ...child.props.style, ...positionStyle }
   });
 
-  const content = (<div className={className} >
-    {hasMask ? <div {...maskProps} ref={maskRef}></div> : null}
+  const content = (<div className={wrapperClassName} >
+    {hasMask ? <div className={maskClassName} style={maskStyle} ref={maskRef}></div> : null}
     {newChildren}
   </div>);
 

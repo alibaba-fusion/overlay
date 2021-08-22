@@ -37,14 +37,25 @@ class Demo extends React.Component {
                 }}>
                     Open
                 </button>
-                <Overlay visible={this.state.visible}
+                <Overlay 
+                    visible={this.state.visible}
+                    maskClassName='next-overlay-mask'
+                    maskStyle={{
+                        position: 'fixed',
+                        top: 0,
+                        right: 0,
+                        bottom: 0,
+                        left: 0,
+                        height: '100%',
+                        backgroundColor: '#00000073'
+                    }}
                     hasMask
                     canCloseByMask
                     fixed
                     offset={[0, 100]}
                     safeNode={() => this.dialogRef}
                     onRequestClose={this.onClose}
-                    >                
+                >
                     <div style={{width: '100vw', pointerEvents: 'none'}}>
                         <div 
                             ref={ref => this.dialogRef = ref}

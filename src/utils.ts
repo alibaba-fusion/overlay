@@ -55,7 +55,7 @@ export function useListener(node: HTMLElement, eventName: string, callback: Even
             }
         }
 
-        return null;
+        return undefined;
     }, [condition])
 
     return;

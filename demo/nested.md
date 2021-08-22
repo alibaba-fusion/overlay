@@ -36,14 +36,3 @@ ReactDOM.render(
     </Popup>
     , mountNode);
 ```
-
-```css
-.overlay-demo {
-    width: 300px;
-    height: 100px;
-    padding: 10px;
-    border: 1px solid #eee;
-    background: #FFFFFF;
-    box-shadow: 2px 2px 20px rgba(0,0,0,0.15);
-}
-```

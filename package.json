@@ -1,7 +1,7 @@
 {
   "name": "@alifd/overlay",
   "version": "0.1.0",
-  "description": "intro component",
+  "description": "overlay base component",
   "files": [
     "demo/",
     "es/",
@@ -57,5 +57,6 @@
     "type": "git",
     "url": "https://github.com/alibaba-fusion/overlay.git"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "homepage": "https://unpkg.com/@alifd/overlay@0.1.0/build/index.html"
 }

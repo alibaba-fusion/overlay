@@ -88,7 +88,7 @@ const Popup = (props: PopupProps) => {
     throw new Error('Can not set ref by string in Overlay, use function instead.');
   }
 
-  const triggerCallback = useCallback((ref) => {
+  const triggerRefCallback = useCallback((ref) => {
     triggerRef.current = ref;
     // @ts-ignore
     child && typeof child.ref === 'function' && child.ref(ref);
@@ -167,7 +167,7 @@ const Popup = (props: PopupProps) => {
   }
 
   const triggerProps: any = {
-    ref: triggerCallback
+    ref: triggerRefCallback
   };
   const overlayOtherProps: any = {}
 
