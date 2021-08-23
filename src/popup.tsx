@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { CSSProperties, ReactElement } from 'react';
 
 import Overlay, { OverlayEvent } from './overlay';
+import { placementType } from './placement';
 import { makeChain } from './utils';
 
 type TriggerType = 'click' | 'hover' | 'focus';
@@ -18,7 +19,7 @@ export interface PopupProps {
   triggerClickKeycode?: number | Array<number>;
   container?: (ele: Element) => Element;
 
-  placement?: 'topLeft' | 'top' | 'topRight' | 'left' | 'right' | 'bottom' | 'bottomLeft' | 'bottomRight' | 'leftTop' | 'leftBottom' | 'rightTop' | 'rightBottom';
+  placement?: placementType;
   /**
    * 偏离 placement 对其方向像素
    */
@@ -64,8 +65,7 @@ const Popup = (props: PopupProps) => {
     onVisibleChange = () => { },
     container = body,
     style = {},
-    placement,
-    placementOffset,
+    placement="bottomLeft",
     onClick,
     onKeyDown,
     onMouseEnter,
@@ -79,11 +79,11 @@ const Popup = (props: PopupProps) => {
   } = props;
 
   const [visible, setVisible] = useState(defaultVisible || props.visible);
-  const triggerRef = useRef(null);
-  const mouseLeaveTimer = useRef(null);
-  const mouseEnterTimer = useRef(null);
+  const triggerRef: any = useRef(null);
+  const mouseLeaveTimer: any = useRef(null);
+  const mouseEnterTimer: any = useRef(null);
 
-  const child = React.Children.only(children);
+  const child: ReactElement | undefined = React.Children.only(children);
   if (typeof (child as any).ref === 'string') {
     throw new Error('Can not set ref by string in Overlay, use function instead.');
   }
@@ -192,10 +192,11 @@ const Popup = (props: PopupProps) => {
   });
 
   return <>
-    {React.cloneElement(child, triggerProps)}
+    {child && React.cloneElement(child, triggerProps)}
     <Overlay
       {...others}
       {...overlayOtherProps}
+      placement={placement}
       container={() => container(triggerRef.current)}
       safeNode={safeNode}
       visible={visible}

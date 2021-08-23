@@ -20,20 +20,12 @@ Overlay 提供了点击弹层外文档中节点隐藏该弹层的功能，如果
 
 #### 定位
 
-1.  align 的值可以是由空格隔开的字符串，如 `['tl', 'bl']`，其中 `tl` 代表目标元素的左上方，`bl` 代表基准元素的左下方，所以 `['tl', 'bl']` 的意思是目标元素的左上方对齐基准元素左下方。其中定位的可选值有 `tl`, `tc`, `tr`, `cl`, `cc`, `cr`, `bl`, `bc`, `br`。`t` 为 `top` 的缩写，`b` 为 `bottom` 的缩写，`c` 为 `center` 的缩写，`l` 为 `left` 的缩写，`r` 为 `right` 的缩写.
+1.  points 的值可以是由空格隔开的字符串，如 `['tl', 'bl']`，其中 `tl` 代表目标元素的左上方，`bl` 代表基准元素的左下方，所以 `['tl', 'bl']` 的意思是目标元素的左上方对齐基准元素左下方。其中定位的可选值有 `tl`, `tc`, `tr`, `cl`, `cc`, `cr`, `bl`, `bc`, `br`。`t` 为 `top` 的缩写，`b` 为 `bottom` 的缩写，`c` 为 `center` 的缩写，`l` 为 `left` 的缩写，`r` 为 `right` 的缩写.
 
-2.  align 支持的 Boolean 值仅为 false，在设置为 false 时，不使用 JS 定位，这样你可以根据你的需要传入 style 或者 className 进行 CSS 定位。
-
-3.  rtl情况下会自动翻转 r(right)与 l(left), 例如 rtl状态下`tl bl`与 非rtl状态下`tr br`等效
-    下面的例子演示了如何将弹层定位到页面的右上角：
-
-```html
-<Overlay visible align="tr tr"><span>123</span></Overlay>
-```
 
 ### Popup
 
-Popup 是对 Overlay 的封装，它接收某个节点作为触发节点，弹出一个浮层，这个浮层默认情况下使用这个节点作为定位的参照对象。
+Popup 是对 Overlay 的封装，children作为触发节点，弹出一个浮层，这个浮层默认情况下使用这个节点作为定位的参照对象。
 
 
 ## API
@@ -61,7 +53,6 @@ Popup 是对 Overlay 的封装，它接收某个节点作为触发节点，弹�
 | afterClose             | 弹层关闭后触发事件的回调函数, 如果有动画，则在动画结束后触发    | Function       | func.noop |
 | beforePosition         | 弹层定位完成前触发的事件               | Function       | func.noop |
 | onPosition             | 弹层定位完成时触发的事件<br/><br/>**签名**:<br/>Function(config: Object, node: Object) => void<br/>**参数**:<br/>_config_: {Object} 定位的参数<br/>_config.align_: {Array} 对齐方式，如 ['cc', 'cc']（如果开启 needAdjust，可能和预先设置的 align 不同）<br/>_config.top_: {Number} 距离视口顶部距离<br/>_config.left_: {Number} 距离视口左侧距离<br/>_node_: {Object} 定位参照的容器节点 | Function       | func.noop |
-| shouldUpdatePosition   | 是否在每次弹层重新渲染后强制更新定位信息，一般用于弹层内容区域大小发生变化时，仍需保持原来的定位方式                | Boolean        | false |
 | autoFocus              | 弹层打开时是否让其中的元素自动获取焦点              | Boolean        | false |
 | needAdjust             | 当弹层由于页面滚动等情况不在可视区域时，是否自动调整定位以出现在可视区域                              | Boolean        | true  |
 | disableScroll          | 是否禁用页面滚动  | Boolean        | false |
@@ -77,8 +68,8 @@ Popup 是对 Overlay 的封装，它接收某个节点作为触发节点，弹�
 
 | 参数                  | 说明         | 类型           | 默认值                            |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------------------------------ |
-| children            | 弹层内容       | ReactNode    | -                              |
-| trigger             | 触发弹层显示或隐藏的元素   | ReactElement | -                              |
+| children            | 触发弹层显示或隐藏的元素       | ReactNode    | -                              |
+| overlay             | 弹层内容                    | ReactElement | -                              |
 | triggerType         | 触发弹层显示或隐藏的操作类型，可以是 'click'，'hover'，'focus'，或者它们组成的数组，如 ['hover', 'focus']                    | String/Array | 'hover'                        |
 | triggerClickKeycode | 当 triggerType 为 click 时才生效，可自定义触发弹层显示的键盘码           | Number/Array | [KEYCODE.SPACE, KEYCODE.ENTER] |
 | visible             | 弹层当前是否显示   | Boolean      | -                              |
@@ -87,5 +78,4 @@ Popup 是对 Overlay 的封装，它接收某个节点作为触发节点，弹�
 | disabled            | 设置此属性，弹层无法显示或隐藏| Boolean      | false                          |
 | delay               | 弹层显示或隐藏的延时时间（以毫秒为单位），在 triggerType 被设置为 hover 时生效   | Number       | 200                            |
 | canCloseByTrigger   | trigger 是否可以关闭弹层   | Boolean      | true                           |
-| target              | 弹层定位的参照元素  | any          | target 属性，即触发元素                |
 | followTrigger       | 是否跟随trigger滚动  | Boolean      | false 

@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from 'react'
+import { useEffect } from 'react'
 
 export interface onReturn {
     off: Function

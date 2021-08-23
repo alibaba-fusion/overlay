@@ -2,7 +2,7 @@ import { CSSProperties } from 'react';
 
 type point = 'tl' | 'tc' | 'tr' | 'cl' | 'cc' | 'cr' | 'bl' | 'bc' | 'br';
 export type pointsType = [point, point];
-export type placementType = 'topLeft' | 'top' | 'topRight' | 'left' | 'right' | 'bottom' | 'bottomLeft' | 'bottomRight' | 'leftTop' | 'leftBottom' | 'rightTop' | 'rightBottom';
+export type placementType = 'topLeft' | 'top' | 'topRight' | 'rightTop' | 'right' | 'rightBottom' | 'bottomLeft' | 'bottom' | 'bottomRight' | 'leftTop' | 'left' | 'leftBottom';
 
 export interface PlacementsConfig {
   position: 'absolute' | 'fixed';
@@ -207,6 +207,26 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
     return np;
   }
 
+  function ajustLeftAndTop(l: number, t: number) {
+    if (t < 0) {
+      t = 0;
+    }
+    if (l < 0) {
+      l = 0;
+    }
+    if (t + oheight > cheight) {
+      t = cheight - oheight;
+    }
+    if (l + owidth > cwidth) {
+      l = cwidth - owidth;
+    }
+
+    return {
+      left: l,
+      top: t
+    }
+  }
+
   if (placement && shouldResizePlacement(left, top)) {
     const nplacement = getNewPlacement(left, top, placement);
     // step2: 空间不够，替换位置重新计算位置
@@ -219,22 +239,11 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
         if (nplacement !== nnplacement) {
           let { left: nnleft, top: nntop } = getXY(nnplacement);
 
-          if (nntop < 0) {
-            nntop = 0;
-          }
-          if (nnleft < 0) {
-            nnleft = 0;
-          }
-          if (nntop + oheight > cheight) {
-            nntop = cheight - oheight;
-          }
-          if (nnleft + owidth > cwidth) {
-            nnleft = cwidth - owidth;
-          }
+          const { left: nnnleft, top: nnntop } = ajustLeftAndTop(nnleft, nntop);
 
           placement = nnplacement;
-          left = nnleft;
-          top = nntop;
+          left = nnnleft;
+          top = nnntop;
         }
 
       } else {
@@ -242,6 +251,10 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
         left = nleft;
         top = ntop;
       }
+    } else {
+      const { left: nleft, top: ntop } = ajustLeftAndTop(left, top);
+      left = nleft;
+      top = ntop;
     }
   }
 

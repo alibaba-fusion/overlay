@@ -1,8 +1,6 @@
 import InternalOverlay from './overlay';
 import Popup from './popup';
 
-// export { pointsType } from './placement';
-
 type InternalOverlayType = typeof InternalOverlay;
 
 interface OverlayInterface extends InternalOverlayType {
