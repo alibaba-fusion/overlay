@@ -20,7 +20,7 @@ const style = {
 };
 
 ReactDOM.render(
-    <div style={{
+    <div id="a" style={{
         position: 'relative',
         height: 150,
         padding: 30,
@@ -29,6 +29,7 @@ ReactDOM.render(
     }}>
         <Popup 
             overlay={<div style={style}>Hello World From Popup!</div>}
+            placement="bottomLeft"
             triggerType="click"
             container={trigger => trigger.parentNode}>
             <button style={{marginTop: 30}}>Open</button>

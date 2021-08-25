@@ -3,7 +3,7 @@ import { CSSProperties, ReactElement } from 'react';
 
 import Overlay, { OverlayEvent } from './overlay';
 import { placementType } from './placement';
-import { makeChain } from './utils';
+import { makeChain, saveRef } from './utils';
 
 type TriggerType = 'click' | 'hover' | 'focus';
 export type TriggerTypes = Array<TriggerType>;
@@ -80,19 +80,16 @@ const Popup = (props: PopupProps) => {
 
   const [visible, setVisible] = useState(defaultVisible || props.visible);
   const triggerRef: any = useRef(null);
+  const overlayRef: any = useRef(null);
   const mouseLeaveTimer: any = useRef(null);
   const mouseEnterTimer: any = useRef(null);
+  const safeNodes = Array.isArray(safeNode) ? safeNode : (typeof safeNode === 'function' ? [safeNode] : []);
+
 
   const child: ReactElement | undefined = React.Children.only(children);
   if (typeof (child as any).ref === 'string') {
     throw new Error('Can not set ref by string in Overlay, use function instead.');
   }
-
-  const triggerRefCallback = useCallback((ref) => {
-    triggerRef.current = ref;
-    // @ts-ignore
-    child && typeof child.ref === 'function' && child.ref(ref);
-  }, [])
 
   useEffect(() => {
     if ('visible' in props) {
@@ -102,7 +99,9 @@ const Popup = (props: PopupProps) => {
 
   const handleVisibleChange = (visible: boolean, e: OverlayEvent) => {
     if (!('visible' in props)) {
-      setVisible(visible);
+      if (visible || overlayRef.current) {
+        setVisible(visible);
+      }
     }
 
     onVisibleChange(visible, e);
@@ -167,7 +166,8 @@ const Popup = (props: PopupProps) => {
   }
 
   const triggerProps: any = {
-    ref: triggerRefCallback
+    //@ts-ignore
+    ref: makeChain(saveRef(triggerRef), saveRef(child.ref))
   };
   const overlayOtherProps: any = {}
 
@@ -183,10 +183,14 @@ const Popup = (props: PopupProps) => {
         triggerProps.onMouseLeave = makeChain(handleMouseLeave('trigger'), onMouseLeave);
         overlayOtherProps.onMouseEnter = makeChain(handleMouseEnter('overlay'), overlayProps.onMouseEnter);
         overlayOtherProps.onMouseLeave = makeChain(handleMouseLeave('overlay'), overlayProps.onMouseLeave);
+        // hover不允许点击关闭
+        safeNodes.push(() => triggerRef.current);
         break;
       case 'focus':
         triggerProps.onFocus = makeChain(handleFocus, onFocus);
         triggerProps.onBlur = makeChain(handleBlur, onBlur);
+        // focus不允许点击关闭
+        safeNodes.push(() => triggerRef.current);
         break;
     }
   });
@@ -196,9 +200,11 @@ const Popup = (props: PopupProps) => {
     <Overlay
       {...others}
       {...overlayOtherProps}
+      //@ts-ignore
+      ref={makeChain(saveRef(overlayRef), saveRef(child.ref))}
       placement={placement}
       container={() => container(triggerRef.current)}
-      safeNode={safeNode}
+      safeNode={safeNodes}
       visible={visible}
       target={() => triggerRef.current}
       onRequestClose={(e) => handleVisibleChange(false, e)}

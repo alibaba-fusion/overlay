@@ -62,7 +62,7 @@ export interface OverlayProps {
   onMouseLeave?: () => void;
 }
 
-const Overlay = (props: OverlayProps) => {
+const Overlay = React.forwardRef((props: OverlayProps, ref) => {
   const body = () => document.body;
   const {
     target = body,
@@ -99,7 +99,7 @@ const Overlay = (props: OverlayProps) => {
   const overlayRefCallback = useCallback((node) => {
     overlayRef.current = node;
     //@ts-ignore
-    child && typeof child.ref === 'function' && child.ref(node);
+    ref && typeof ref === 'function' && ref(node);
 
     if (node !== null) {
       const containerNode = getContainer(container());
@@ -168,22 +168,22 @@ const Overlay = (props: OverlayProps) => {
     return undefined;
   }, [visible && hasMask]);
 
-  useEffect(() => {
-    if (visible && !fixed && overlayRef.current) {
-      const containerNode = getContainer(container());
-      if (containerNode === document.body) {
-        if (getStyle(document.body, 'position') === 'static') {
-          const originStyle = document.body.getAttribute('style');
-          setStyle(document.body, 'position', 'relative');
-          return () => {
-            document.body.setAttribute('style', originStyle || '');
-          }
-        }
-      }
-    }
+  // useEffect(() => {
+  //   if (visible && !fixed && overlayRef.current) {
+  //     const containerNode = getContainer(container());
+  //     if (containerNode === document.body) {
+  //       if (getStyle(document.body, 'position') === 'static') {
+  //         const originStyle = document.body.getAttribute('style');
+  //         setStyle(document.body, 'position', 'relative');
+  //         return () => {
+  //           document.body.setAttribute('style', originStyle || '');
+  //         }
+  //       }
+  //     }
+  //   }
 
-    return undefined;
-  }, [visible && !fixed && overlayRef.current])
+  //   return undefined;
+  // }, [visible && !fixed && overlayRef.current])
 
 
   if (!visible) {
@@ -205,6 +205,6 @@ const Overlay = (props: OverlayProps) => {
     content,
     container()
   );
-};
+});
 
 export default Overlay;

@@ -1,4 +1,5 @@
 import { CSSProperties } from 'react';
+import { getTopLeft } from './utils';
 
 type point = 'tl' | 'tc' | 'tr' | 'cl' | 'cc' | 'cr' | 'bl' | 'bc' | 'br';
 export type pointsType = [point, point];
@@ -8,6 +9,9 @@ export interface PlacementsConfig {
   position: 'absolute' | 'fixed';
   target: HTMLElement;
   overlay: HTMLElement;
+  /**
+   * 弹窗的位置相对该节点进行计算，position != static
+   */
   container: HTMLElement;
   /**
    * 弹窗 overlay 相对于目标元素 target 的位置
@@ -60,7 +64,11 @@ export interface placementStyleType {
   },
   style: CSSProperties
 }
-
+/**
+ * 计算相对于 container 的偏移位置
+ * @param config 
+ * @returns 
+ */
 export default function getPlacements(config: PlacementsConfig): placementStyleType {
   const {
     target,
@@ -87,6 +95,9 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
 
   /**
    * 可视窗口是浏览器给用户展示的窗口
+   * getBoundingClientRect(): top/left 是相对 viewport 
+   * node: offsetTop/offsetLeft 是相对 parent 元素的
+   * 
    * top: 元素上边  距离可视窗口 上边框的距离
    * left: 元素左边 距离可视窗口 左边框的距离
    * 
@@ -94,12 +105,9 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
    * scrollLeft: 容器左右滚动距离
    */
   const { width: twidth, height: theight, left: tleft, top: ttop } = target.getBoundingClientRect();
-  const { width: cwidth, height: cheight, left: cleft, top: ctop } = container.getBoundingClientRect();
-  const { scrollTop: cscrollTop, scrollLeft: cscrollLeft } = container;
+  const { left: cleft, top: ctop } = getTopLeft(container);
+  const { scrollWidth: cwidth, scrollHeight: cheight, scrollTop: cscrollTop, scrollLeft: cscrollLeft } = container;
   const { width: owidth, height: oheight } = overlay.getBoundingClientRect();
-
-  // console.log(target.getBoundingClientRect())
-  // console.log(container, container.getBoundingClientRect())
 
   function getXY(p: placementType | undefined) {
     let basex = tleft - cleft + cscrollLeft;
@@ -227,36 +235,36 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
     }
   }
 
-  if (placement && shouldResizePlacement(left, top)) {
-    const nplacement = getNewPlacement(left, top, placement);
-    // step2: 空间不够，替换位置重新计算位置
-    if (placement !== nplacement) {
-      let { left: nleft, top: ntop } = getXY(nplacement);
+  // if (placement && shouldResizePlacement(left, top)) {
+  //   const nplacement = getNewPlacement(left, top, placement);
+  //   // step2: 空间不够，替换位置重新计算位置
+  //   if (placement !== nplacement) {
+  //     let { left: nleft, top: ntop } = getXY(nplacement);
 
-      if (shouldResizePlacement(nleft, ntop)) {
-        const nnplacement = getNewPlacement(nleft, ntop, nplacement);
-        // step3: 空间依然不够，说明xy轴至少有一个方向是怎么更换位置都不够的。停止计算开始补偿逻辑
-        if (nplacement !== nnplacement) {
-          let { left: nnleft, top: nntop } = getXY(nnplacement);
+  //     if (shouldResizePlacement(nleft, ntop)) {
+  //       const nnplacement = getNewPlacement(nleft, ntop, nplacement);
+  //       // step3: 空间依然不够，说明xy轴至少有一个方向是怎么更换位置都不够的。停止计算开始补偿逻辑
+  //       if (nplacement !== nnplacement) {
+  //         let { left: nnleft, top: nntop } = getXY(nnplacement);
 
-          const { left: nnnleft, top: nnntop } = ajustLeftAndTop(nnleft, nntop);
+  //         const { left: nnnleft, top: nnntop } = ajustLeftAndTop(nnleft, nntop);
 
-          placement = nnplacement;
-          left = nnnleft;
-          top = nnntop;
-        }
+  //         placement = nnplacement;
+  //         left = nnnleft;
+  //         top = nnntop;
+  //       }
 
-      } else {
-        placement = nplacement;
-        left = nleft;
-        top = ntop;
-      }
-    } else {
-      const { left: nleft, top: ntop } = ajustLeftAndTop(left, top);
-      left = nleft;
-      top = ntop;
-    }
-  }
+  //     } else {
+  //       placement = nplacement;
+  //       left = nleft;
+  //       top = ntop;
+  //     }
+  //   } else {
+  //     const { left: nleft, top: ntop } = ajustLeftAndTop(left, top);
+  //     left = nleft;
+  //     top = ntop;
+  //   }
+  // }
 
   return {
     config: {

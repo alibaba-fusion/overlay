@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useCallback } from 'react'
 
 export interface onReturn {
     off: Function
@@ -73,14 +73,29 @@ export function makeChain(...fns: any[]) {
         return fns[0];
     }
 
-    return (...args: any[]) => {
+    return useCallback((...args: any[]) => {
         for (let i = 0, j = fns.length; i < j; i++) {
             if (fns[i] && fns[i].apply) {
                 //@ts-ignore
                 fns[i].apply(this, args);
             }
         }
-    };
+    }, fns);
+}
+
+export function saveRef(ref: any) {
+    if (!ref) {
+        return null;
+    }
+    return useCallback((element: any) => {
+        if (typeof ref === 'string') {
+            throw new Error(`can not set ref string for ${ref}`);
+        } else if (typeof ref === 'function') {
+            ref(element);
+        } else if (Object.prototype.hasOwnProperty.call(ref, 'current')) {
+            ref.current = element;
+        }
+    }, [])
 }
 
 export const getContainer = (container: HTMLElement) => {
@@ -91,8 +106,8 @@ export const getContainer = (container: HTMLElement) => {
     let calcContainer: HTMLElement = container;
 
     while (getStyle(calcContainer, 'position') === 'static') {
-        if (!calcContainer || calcContainer === document.body) {
-            return document.body;
+        if (!calcContainer || calcContainer === document.documentElement) {
+            return document.documentElement;
         }
         calcContainer = calcContainer.parentNode as HTMLElement;
     }
@@ -130,5 +145,22 @@ export function throttle(func: Function, wait: number) {
             func.apply(this, args);
             previous = now;
         }
+    }
+}
+
+export function getTopLeft(node: HTMLElement) {
+    /**
+     * documentElement
+     */
+    if (node === document.documentElement) {
+        return {
+            top: 0,
+            left: 0
+        }
+    }
+    const { left, top } = node.getBoundingClientRect();
+    return {
+        top,
+        left,
     }
 }
