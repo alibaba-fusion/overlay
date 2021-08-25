@@ -3,7 +3,7 @@ import { CSSProperties, ReactElement } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import ReactDOM from 'react-dom';
 import getPlacements, { pointsType, placementType } from './placement';
-import { useListener, getStyle, setStyle, getContainer, throttle } from './utils';
+import { useListener, setStyle, getContainer, throttle } from './utils';
 
 export interface OverlayEvent extends MouseEvent, KeyboardEvent {
   target: EventTarget | null;
@@ -48,6 +48,8 @@ export interface OverlayProps {
    * 点击遮罩区域是否关闭弹层，显示遮罩时生效	
    */
   canCloseByMask?: boolean;
+  canCloseByOutSideClick?: boolean;
+  canCloseByEsc?: boolean;
   wrapperClassName?: string;
   maskClassName?: string;
   maskStyle?: CSSProperties;
@@ -81,6 +83,8 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     placementOffset,
     hasMask,
     canCloseByMask,
+    canCloseByOutSideClick = true,
+    canCloseByEsc = true,
     safeNode,
     ...others
   } = props;
@@ -139,11 +143,12 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
 
     const safeNodeList = Array.isArray(safeNode) ? safeNode : (typeof safeNode === 'function' ? [safeNode] : []);
 
-    // 点击弹层不关闭
+    // 弹层默认是安全节点
     if (overlayRef.current) {
       safeNodeList.push(() => overlayRef.current);
     }
 
+    // 安全节点不关闭
     for (let i = 0; i < safeNodeList.length; i++) {
       const node = typeof safeNodeList[i] === 'function' ? safeNodeList[i]() : null;
       if (node && (node === e.target || node.contains(e.target as Node))) {
@@ -151,10 +156,23 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
       }
     }
 
-    onRequestClose(e);
+    if (canCloseByOutSideClick) {
+      onRequestClose(e);
+    }
   }
 
   useListener(document.body, 'click', clickEvent as any, false, !!(visible && overlayRef.current));
+
+  const keydownEvent = (e: OverlayEvent) => {
+    console.log(e)
+    if (!visible) {
+      return;
+    }
+    if (e.keyCode === 27 && canCloseByEsc) {
+      onRequestClose(e);
+    }
+  }
+  useListener(document.body, 'keydown', keydownEvent as any, false, !!(visible && overlayRef.current && canCloseByEsc));
 
   useEffect(() => {
     if (visible && hasMask) {

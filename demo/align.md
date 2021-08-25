@@ -21,6 +21,7 @@ const style = {
 
 ReactDOM.render(
     <div id="containerId" className="overlay-container">
+     {/*  
         <Overlay target="containerId" visible points={["br", "tl"]}><button>br tl</button></Overlay>
         <Overlay target="containerId" visible points={["tc", "tc"]}><button>tc tc</button></Overlay>
         <Overlay target="containerId" visible points={["bl", "tr"]}><button>bl tr</button></Overlay>
@@ -30,6 +31,7 @@ ReactDOM.render(
         <Overlay target="containerId" visible points={["bl", "bl"]}><button>bl bl</button></Overlay>
         <Overlay target="containerId" visible points={["cl", "cl"]}><button>cl cl</button></Overlay>
         <Overlay target="containerId" visible points={["cc", "cc"]}><button>cc cc</button></Overlay>
+    */}
     </div>
   , mountNode);
 ```

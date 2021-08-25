@@ -148,6 +148,18 @@ export function throttle(func: Function, wait: number) {
     }
 }
 
+export function debounce(func: Function, wait: number) {
+    let timeoutID: NodeJS.Timeout;
+    return () => {
+        const args = arguments;
+        clearTimeout(timeoutID);
+        timeoutID = setTimeout(() => {
+            //@ts-ignore
+            func.apply(this, args);
+        }, wait);
+    }
+}
+
 export function getTopLeft(node: HTMLElement) {
     /**
      * documentElement
