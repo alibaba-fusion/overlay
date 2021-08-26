@@ -36,6 +36,9 @@ export interface PopupProps {
    * 弹层显示或隐藏时触发的回调函数
    */
   onVisibleChange?: (visible: boolean, e: OverlayEvent) => void;
+  cache?: boolean;
+  onOpen?: Function;
+
   className?: string;
   /**
    * 弹窗内容
@@ -51,9 +54,11 @@ export interface PopupProps {
   delay?: number;
   overlayProps?: any;
   safeNode?: Array<() => Element>;
+  beforePosition?: Function;
+  onPosition?: Function;
 }
 
-const Popup = (props: PopupProps) => {
+const Popup = React.forwardRef((props: PopupProps, ref) => {
   const body = () => document.body;
   const {
     overlay,
@@ -75,6 +80,8 @@ const Popup = (props: PopupProps) => {
     delay = 200,
     overlayProps = {},
     safeNode,
+    beforePosition,
+    onPosition,
     ...others
   } = props;
 
@@ -200,8 +207,9 @@ const Popup = (props: PopupProps) => {
     <Overlay
       {...others}
       {...overlayOtherProps}
+      beforePosition={beforePosition}
       //@ts-ignore
-      ref={makeChain(saveRef(overlayRef), saveRef(child.ref))}
+      ref={makeChain(saveRef(overlayRef), saveRef(ref))}
       placement={placement}
       container={() => container(triggerRef.current)}
       safeNode={safeNodes}
@@ -212,6 +220,6 @@ const Popup = (props: PopupProps) => {
       {overlay}
     </Overlay>
   </>
-};
+});
 
 export default Popup;

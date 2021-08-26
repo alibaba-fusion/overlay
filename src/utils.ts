@@ -83,6 +83,20 @@ export function makeChain(...fns: any[]) {
     }, fns);
 }
 
+export function callRef(ref:any, element: HTMLElement) {
+    if (!ref) {
+        return;
+    }
+
+    if (typeof ref === 'string') {
+        throw new Error(`can not set ref string for ${ref}`);
+    } else if (typeof ref === 'function') {
+        ref(element);
+    } else if (Object.prototype.hasOwnProperty.call(ref, 'current')) {
+        ref.current = element;
+    }
+}
+
 export function saveRef(ref: any) {
     if (!ref) {
         return null;

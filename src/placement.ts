@@ -26,6 +26,7 @@ export interface PlacementsConfig {
    */
   points?: pointsType;
   offset?: number[];
+  beforePosition?: Function;
 }
 
 export interface placementMapType {
@@ -78,7 +79,8 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
     placementOffset = 0,
     points: opoints = ['tl', 'bl'],
     offset = [0, 0],
-    position = 'absolute'
+    position = 'absolute',
+    beforePosition,
   } = config;
 
   if (position === 'fixed') {
@@ -172,12 +174,13 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
     setPointX(points[0][1], false, owidth);
 
     return {
+      points,
       left: basex + offset[0],
       top: basey + offset[1],
     }
   }
 
-  let { left, top } = getXY(placement);
+  let { left, top, points } = getXY(placement);
 
   function shouldResizePlacement(l: number, t: number) {
     return t < 0 || l < 0 || t + oheight > cheight || l + owidth > cwidth;
@@ -235,45 +238,52 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
     }
   }
 
-  // if (placement && shouldResizePlacement(left, top)) {
-  //   const nplacement = getNewPlacement(left, top, placement);
-  //   // step2: 空间不够，替换位置重新计算位置
-  //   if (placement !== nplacement) {
-  //     let { left: nleft, top: ntop } = getXY(nplacement);
+  if (placement && shouldResizePlacement(left, top)) {
+    const nplacement = getNewPlacement(left, top, placement);
+    // step2: 空间不够，替换位置重新计算位置
+    if (placement !== nplacement) {
+      let { left: nleft, top: ntop } = getXY(nplacement);
 
-  //     if (shouldResizePlacement(nleft, ntop)) {
-  //       const nnplacement = getNewPlacement(nleft, ntop, nplacement);
-  //       // step3: 空间依然不够，说明xy轴至少有一个方向是怎么更换位置都不够的。停止计算开始补偿逻辑
-  //       if (nplacement !== nnplacement) {
-  //         let { left: nnleft, top: nntop } = getXY(nnplacement);
+      if (shouldResizePlacement(nleft, ntop)) {
+        const nnplacement = getNewPlacement(nleft, ntop, nplacement);
+        // step3: 空间依然不够，说明xy轴至少有一个方向是怎么更换位置都不够的。停止计算开始补偿逻辑
+        if (nplacement !== nnplacement) {
+          let { left: nnleft, top: nntop } = getXY(nnplacement);
 
-  //         const { left: nnnleft, top: nnntop } = ajustLeftAndTop(nnleft, nntop);
+          const { left: nnnleft, top: nnntop } = ajustLeftAndTop(nnleft, nntop);
 
-  //         placement = nnplacement;
-  //         left = nnnleft;
-  //         top = nnntop;
-  //       }
+          placement = nnplacement;
+          left = nnnleft;
+          top = nnntop;
+        }
 
-  //     } else {
-  //       placement = nplacement;
-  //       left = nleft;
-  //       top = ntop;
-  //     }
-  //   } else {
-  //     const { left: nleft, top: ntop } = ajustLeftAndTop(left, top);
-  //     left = nleft;
-  //     top = ntop;
-  //   }
-  // }
+      } else {
+        placement = nplacement;
+        left = nleft;
+        top = ntop;
+      }
+    } else {
+      const { left: nleft, top: ntop } = ajustLeftAndTop(left, top);
+      left = nleft;
+      top = ntop;
+    }
+  }
 
-  return {
+  const result = {
     config: {
       placement,
+      points,
     },
     style: {
       position,
       left: left,
       top: top,
     }
+  };
+
+  if (beforePosition && typeof beforePosition) {
+    return beforePosition(result);
   }
+
+  return result;
 }

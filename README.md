@@ -45,14 +45,10 @@ Popup 是对 Overlay 的封装，children作为触发节点，弹出一个浮层
 | canCloseByEsc          | 是否支持 esc 按键关闭弹层                  | Boolean        | true  |
 | canCloseByOutSideClick | 点击弹层外的区域是否关闭弹层，不显示遮罩时生效          | Boolean        | true  |
 | canCloseByMask         | 点击遮罩区域是否关闭弹层，显示遮罩时生效             | Boolean        | true  |
-| beforeOpen             | 弹层打开前触发事件的回调函数             | Function       | func.noop |
-| onOpen                 | 弹层打开时触发事件的回调函数             | Function       | func.noop |
-| afterOpen              | 弹层打开后触发事件的回调函数, 如果有动画，则在动画结束后触发    | Function       | func.noop |
-| beforeClose            | 弹层关闭前触发事件的回调函数             | Function       | func.noop |
-| onClose                | 弹层关闭时触发事件的回调函数             | Function       | func.noop |
-| afterClose             | 弹层关闭后触发事件的回调函数, 如果有动画，则在动画结束后触发    | Function       | func.noop |
-| beforePosition         | 弹层定位完成前触发的事件               | Function       | func.noop |
-| onPosition             | 弹层定位完成时触发的事件<br/><br/>**签名**:<br/>Function(config: Object, node: Object) => void<br/>**参数**:<br/>_config_: {Object} 定位的参数<br/>_config.align_: {Array} 对齐方式，如 ['cc', 'cc']（如果开启 needAdjust，可能和预先设置的 align 不同）<br/>_config.top_: {Number} 距离视口顶部距离<br/>_config.left_: {Number} 距离视口左侧距离<br/>_node_: {Object} 定位参照的容器节点 | Function       | func.noop |
+| onOpen                 | 弹层打开时触发事件的回调函数             | Function       | noop |
+| onClose                | 弹层关闭时触发事件的回调函数             | Function       | noop |
+| beforePosition         | 弹层定位完成前触发的事件               | Function       | noop |
+| onPosition             | 弹层定位完成时触发的事件<br/><br/>**签名**:<br/>Function(config: Object) => void<br/>**参数**:<br/>_config_: {Object} 定位的参数<br/>_config.config.points_: {Array} 对齐方式，如 ['cc', 'cc']（如果开启 needAdjust，可能和预先设置的 points 不同）<br/>_config.style.top_: {Number} 距离视口顶部距离<br/>_config.style.left_: {Number} 距离视口左侧距离 | Function       | noop |
 | autoFocus              | 弹层打开时是否让其中的元素自动获取焦点              | Boolean        | false |
 | needAdjust             | 当弹层由于页面滚动等情况不在可视区域时，是否自动调整定位以出现在可视区域                              | Boolean        | true  |
 | disableScroll          | 是否禁用页面滚动  | Boolean        | false |
@@ -74,7 +70,7 @@ Popup 是对 Overlay 的封装，children作为触发节点，弹出一个浮层
 | triggerClickKeycode | 当 triggerType 为 click 时才生效，可自定义触发弹层显示的键盘码           | Number/Array | [KEYCODE.SPACE, KEYCODE.ENTER] |
 | visible             | 弹层当前是否显示   | Boolean      | -                              |
 | defaultVisible      | 弹层默认是否显示   | Boolean      | false                          |
-| onVisibleChange     | 弹层显示或隐藏时触发的回调函数<br/><br/>**签名**:<br/>Function(visible: Boolean, type: String, e: Object) => void<br/>**参数**:<br/>_visible_: {Boolean} 弹层是否显示<br/>_type_: {String} 触发弹层显示或隐藏的来源 fromTrigger 表示由trigger的点击触发； docClick 表示由document的点击触发<br/>_e_: {Object} DOM事件 | Function     | func.noop                      |
+| onVisibleChange     | 弹层显示或隐藏时触发的回调函数<br/><br/>**签名**:<br/>Function(visible: Boolean, type: String, e: Object) => void<br/>**参数**:<br/>_visible_: {Boolean} 弹层是否显示<br/>_type_: {String} 触发弹层显示或隐藏的来源 fromTrigger 表示由trigger的点击触发； docClick 表示由document的点击触发<br/>_e_: {Object} DOM事件 | Function     | noop                      |
 | disabled            | 设置此属性，弹层无法显示或隐藏| Boolean      | false                          |
 | delay               | 弹层显示或隐藏的延时时间（以毫秒为单位），在 triggerType 被设置为 hover 时生效   | Number       | 200                            |
 | canCloseByTrigger   | trigger 是否可以关闭弹层   | Boolean      | true                           |

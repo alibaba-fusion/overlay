@@ -3,7 +3,7 @@ import { CSSProperties, ReactElement } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import ReactDOM from 'react-dom';
 import getPlacements, { pointsType, placementType } from './placement';
-import { useListener, setStyle, getContainer, throttle } from './utils';
+import { useListener, setStyle, getContainer, throttle, callRef } from './utils';
 
 export interface OverlayEvent extends MouseEvent, KeyboardEvent {
   target: EventTarget | null;
@@ -40,6 +40,15 @@ export interface OverlayProps {
    */
   visible?: boolean;
   onRequestClose?: (event: OverlayEvent) => void;
+  cache?: boolean;
+  /**
+   * 弹窗挂载成功的回调
+   */
+  onOpen?: Function;
+  /**
+   * 弹窗卸载成功后的回调
+   */
+  onClose?: Function;
   /**
    * 是否展示遮罩	
    */
@@ -62,13 +71,14 @@ export interface OverlayProps {
   safeNode?: () => Element | Array<() => Element>;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
+  beforePosition?: Function;
+  onPosition?: Function;
 }
 
 const Overlay = React.forwardRef((props: OverlayProps, ref) => {
   const body = () => document.body;
   const {
     target = body,
-    visible = false,
     children,
     wrapperClassName,
     maskClassName,
@@ -76,7 +86,10 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     points,
     offset,
     fixed,
+    visible,
     onRequestClose = () => { },
+    onOpen,
+    onClose,
     container = body,
     style = {},
     placement,
@@ -86,10 +99,14 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     canCloseByOutSideClick = true,
     canCloseByEsc = true,
     safeNode,
+    beforePosition,
+    onPosition,
+    cache = false,
     ...others
   } = props;
 
   const position = fixed ? 'fixed' : 'absolute';
+  const [firstVisible, setFirst] = useState(visible);
   const [positionStyle, setPositionStyle] = useState<CSSProperties>({ position });
   const overlayRef: any = useRef(null);
   const maskRef = useRef(null);
@@ -102,10 +119,11 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
   // 弹窗挂载
   const overlayRefCallback = useCallback((node) => {
     overlayRef.current = node;
-    //@ts-ignore
-    ref && typeof ref === 'function' && ref(node);
+    callRef(ref, node);
 
     if (node !== null) {
+      !cache && typeof onOpen === 'function' && onOpen(node);
+
       const containerNode = getContainer(container());
       const targetNode = (typeof target === 'string' ? () => document.getElementById(target) : target)();
 
@@ -113,20 +131,24 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
         if (!node || !containerNode || !targetNode) {
           return;
         }
-        const { style } = getPlacements({
+        const placements = getPlacements({
           target: targetNode,
           overlay: node,
           container: containerNode,
           points, offset,
           position,
           placement,
-          placementOffset
+          placementOffset,
+          beforePosition
         });
-        setPositionStyle(style);
+        setPositionStyle(placements.style);
+        typeof onPosition === 'function' && onPosition(placements);
       }, 100);
 
       const ro = new ResizeObserver(updateOverlayPosition);
       ro.observe(containerNode);
+    } else {
+      !cache && typeof onClose === 'function' && onClose(node);
     }
   }, []);
 
@@ -186,25 +208,27 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     return undefined;
   }, [visible && hasMask]);
 
-  // useEffect(() => {
-  //   if (visible && !fixed && overlayRef.current) {
-  //     const containerNode = getContainer(container());
-  //     if (containerNode === document.body) {
-  //       if (getStyle(document.body, 'position') === 'static') {
-  //         const originStyle = document.body.getAttribute('style');
-  //         setStyle(document.body, 'position', 'relative');
-  //         return () => {
-  //           document.body.setAttribute('style', originStyle || '');
-  //         }
-  //       }
-  //     }
-  //   }
+  // 第一次加载 visible=false 不挂在弹窗
+  useEffect(() => {
+    !firstVisible && visible && setFirst(true);
+  }, [visible]);
 
-  //   return undefined;
-  // }, [visible && !fixed && overlayRef.current])
+  // cache 情况下的调用
+  useEffect(() => {
+    if (cache && overlayRef.current) {
+      if (visible) {
+        typeof onOpen === 'function' && onOpen(overlayRef.current);
+      } else {
+        typeof onClose === 'function' && onClose();
+      }
+    }
+  }, [visible, cache && overlayRef.current])
 
+  if (firstVisible === false) {
+    return null;
+  }
 
-  if (!visible) {
+  if (!visible && !cache) {
     return null;
   }
 
@@ -214,7 +238,12 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     style: { ...child.props.style, ...positionStyle }
   }) : null;
 
-  const content = (<div className={wrapperClassName} >
+  const wrapperStyle: any = {};
+  if (cache && !visible) {
+    wrapperStyle.display = 'none';
+  }
+
+  const content = (<div className={wrapperClassName} style={wrapperStyle}>
     {hasMask ? <div className={maskClassName} style={maskStyle} ref={maskRef}></div> : null}
     {newChildren}
   </div>);
