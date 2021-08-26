@@ -118,8 +118,10 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
 
   // 弹窗挂载
   const overlayRefCallback = useCallback((node) => {
+    // overlayRef = child.ref
     overlayRef.current = node;
     callRef(ref, node);
+    callRef((child as any).ref, node);
 
     if (node !== null) {
       !cache && typeof onOpen === 'function' && onOpen(node);
@@ -186,7 +188,6 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
   useListener(document.body, 'click', clickEvent as any, false, !!(visible && overlayRef.current));
 
   const keydownEvent = (e: OverlayEvent) => {
-    console.log(e)
     if (!visible) {
       return;
     }

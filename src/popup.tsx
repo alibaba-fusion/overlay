@@ -92,9 +92,13 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
   const mouseEnterTimer: any = useRef(null);
   const safeNodes = Array.isArray(safeNode) ? safeNode : (typeof safeNode === 'function' ? [safeNode] : []);
 
-
   const child: ReactElement | undefined = React.Children.only(children);
   if (typeof (child as any).ref === 'string') {
+    throw new Error('Can not set ref by string in Overlay, use function instead.');
+  }
+
+  const overlayChild: ReactElement | undefined = React.Children.only(overlay);
+  if (typeof (overlayChild as any).ref === 'string') {
     throw new Error('Can not set ref by string in Overlay, use function instead.');
   }
 
@@ -202,14 +206,17 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     }
   });
 
+
+  const newOverlay = React.cloneElement(overlayChild, {
+    ref: makeChain(saveRef(overlayRef), saveRef(ref), saveRef((overlayChild as any).ref))
+  })
+
   return <>
     {child && React.cloneElement(child, triggerProps)}
     <Overlay
       {...others}
       {...overlayOtherProps}
       beforePosition={beforePosition}
-      //@ts-ignore
-      ref={makeChain(saveRef(overlayRef), saveRef(ref))}
       placement={placement}
       container={() => container(triggerRef.current)}
       safeNode={safeNodes}
@@ -217,7 +224,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
       target={() => triggerRef.current}
       onRequestClose={(e) => handleVisibleChange(false, e)}
     >
-      {overlay}
+      {newOverlay}
     </Overlay>
   </>
 });
