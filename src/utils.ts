@@ -45,13 +45,20 @@ export function on(node: HTMLElement, eventName: string, callback: EventListener
 }
 
 
-export function useListener(node: HTMLElement, eventName: string, callback: EventListenerOrEventListenerObject, useCapture: boolean, condition: boolean) {
+export function useListener(nodeList: HTMLElement | Array<HTMLElement>, eventName: string, callback: EventListenerOrEventListenerObject, useCapture: boolean, condition: boolean) {
     useEffect(() => {
-        if (condition && node && node.addEventListener) {
-            node.addEventListener(eventName, callback, useCapture || false);
+        if (condition) {
+            if (!Array.isArray(nodeList)) {
+                nodeList= [nodeList]
+            }
+            nodeList.forEach(n => {
+                n && n.addEventListener && n.addEventListener(eventName, callback, useCapture || false);
+            });
 
             return () => {
-                node.removeEventListener(eventName, callback, useCapture || false);
+                Array.isArray(nodeList) && nodeList.forEach(n => {
+                    n && n.removeEventListener &&  n.removeEventListener(eventName, callback, useCapture || false);
+                });
             }
         }
 
@@ -129,18 +136,48 @@ export const getContainer = (container: HTMLElement) => {
     return calcContainer;
 };
 
+export const getOverflowNodes = (targetNode: HTMLElement, targetContainer: HTMLElement) => {
+    if (typeof document === undefined) {
+        return [];
+    }
+
+    const overflowNodes: Array<HTMLElement> = [];
+
+    let calcContainer: HTMLElement = targetNode;
+
+    while (true) {
+        if (!calcContainer || calcContainer === targetContainer || calcContainer === document.documentElement) {
+            break;
+        }
+
+        const overflow = getStyle(calcContainer, 'overflow');
+        if (overflow.match(/auto|scroll/)) {
+            overflowNodes.push(calcContainer)
+        }
+
+        calcContainer = calcContainer.parentNode as HTMLElement;
+    }
+
+    return overflowNodes;
+};
+
 export function getStyle(elt: Element, name: string) {
     const style = window.getComputedStyle(elt, null)
 
     return style.getPropertyValue(name);
 }
 
-export function setStyle(node: HTMLElement, name: string | { [key: string]: unknown }, value: string) {
+const PIXEL_PATTERN = /margin|padding|width|height|max|min|offset|size|top|left/i;
+
+export function setStyle(node: HTMLElement, name: string | { [key: string]: unknown } | React.CSSProperties, value?: string) {
     if (!node) {
         return;
     }
 
     if (typeof name === 'string') {
+        if (typeof value === 'number' && PIXEL_PATTERN.test(name)) {
+            value = `${value}px`;
+        }
         //@ts-ignore
         node.style[name] = value;
     } else if (typeof name === 'object' && arguments.length === 2) {

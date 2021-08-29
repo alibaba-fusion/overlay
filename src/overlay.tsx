@@ -3,7 +3,7 @@ import { CSSProperties, ReactElement } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import ReactDOM from 'react-dom';
 import getPlacements, { pointsType, placementType } from './placement';
-import { useListener, setStyle, getContainer, throttle, callRef } from './utils';
+import { useListener, setStyle, getContainer, throttle, callRef, getOverflowNodes } from './utils';
 
 export interface OverlayEvent extends MouseEvent, KeyboardEvent {
   target: EventTarget | null;
@@ -107,13 +107,42 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
 
   const position = fixed ? 'fixed' : 'absolute';
   const [firstVisible, setFirst] = useState(visible);
-  const [positionStyle, setPositionStyle] = useState<CSSProperties>({ position });
-  const overlayRef: any = useRef(null);
+  const [,forceUpdate] = useState(null);
+  const positionStyleRef = useRef<CSSProperties>({ position });
+
+  const targetRef = useRef(null);
+  const overlayRef= useRef(null);
+  const containerRef= useRef(null);
   const maskRef = useRef(null);
+  const overflowRef = useRef<Array<HTMLElement>>([]);
 
   const child: ReactElement | undefined = React.Children.only(children);
   if (typeof (child as any).ref === 'string') {
     throw new Error('Can not set ref by string in Overlay, use function instead.');
+  }
+
+  const updatePosition = () => {
+    const overlayNode = overlayRef.current;
+    const containerNode = containerRef.current;
+    const targetNode = targetRef.current;
+
+    if (!overlayNode || !containerNode || !targetNode) {
+      return;
+    }
+    const placements = getPlacements({
+      target: targetNode,
+      overlay: overlayNode,
+      container: containerNode,
+      points, offset,
+      position,
+      placement,
+      placementOffset,
+      beforePosition
+    });
+
+    positionStyleRef.current = placements.style;
+    setStyle(overlayNode, placements.style);
+    typeof onPosition === 'function' && onPosition(placements);
   }
 
   // 弹窗挂载
@@ -127,28 +156,17 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
       !cache && typeof onOpen === 'function' && onOpen(node);
 
       const containerNode = getContainer(container());
+      containerRef.current = containerNode;
       const targetNode = (typeof target === 'string' ? () => document.getElementById(target) : target)();
+      targetRef.current = targetNode;
 
-      const updateOverlayPosition = throttle(() => {
-        if (!node || !containerNode || !targetNode) {
-          return;
-        }
-        const placements = getPlacements({
-          target: targetNode,
-          overlay: node,
-          container: containerNode,
-          points, offset,
-          position,
-          placement,
-          placementOffset,
-          beforePosition
-        });
-        setPositionStyle(placements.style);
-        typeof onPosition === 'function' && onPosition(placements);
-      }, 100);
 
-      const ro = new ResizeObserver(updateOverlayPosition);
+      overflowRef.current = getOverflowNodes(targetNode, containerNode);
+
+      const ro = new ResizeObserver(throttle(updatePosition.bind(this, true), 100));
       ro.observe(containerNode);
+
+      forceUpdate({});
     } else {
       !cache && typeof onClose === 'function' && onClose(node);
     }
@@ -197,6 +215,17 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
   }
   useListener(document.body, 'keydown', keydownEvent as any, false, !!(visible && overlayRef.current && canCloseByEsc));
 
+  const scrollEvent =  (e: OverlayEvent) => {
+    if (!visible) {
+      return;
+    }
+    // console.log(e)
+    updatePosition();
+  }
+
+  useListener(overflowRef.current, 'scroll', scrollEvent as any, false, !!(visible && overlayRef.current && overflowRef.current.length))
+
+  // 有弹窗情况下在 body 增加 overflow:hidden
   useEffect(() => {
     if (visible && hasMask) {
       const originStyle = document.body.getAttribute('style');
@@ -209,16 +238,17 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     return undefined;
   }, [visible && hasMask]);
 
-  // 第一次加载 visible=false 不挂在弹窗
+  // 第一次加载并且 visible=false 的情况不挂载弹窗
   useEffect(() => {
     !firstVisible && visible && setFirst(true);
   }, [visible]);
 
-  // cache 情况下的调用
+  // cache 情况下的模拟 onOpen/onClose
   useEffect(() => {
     if (cache && overlayRef.current) {
       if (visible) {
         typeof onOpen === 'function' && onOpen(overlayRef.current);
+        updatePosition();
       } else {
         typeof onClose === 'function' && onClose();
       }
@@ -236,7 +266,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
   const newChildren = child ? React.cloneElement(child, {
     ...others,
     ref: overlayRefCallback,
-    style: { ...child.props.style, ...positionStyle }
+    style: { ...child.props.style, ...positionStyleRef.current }
   }) : null;
 
   const wrapperStyle: any = {};
