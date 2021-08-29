@@ -3,7 +3,7 @@ title: 弹层嵌套
 order: 5
 ---
 
-有弹层嵌套需求时，请使用 container 属性将第二个弹层渲染到第一个弹层内部。
+有弹层嵌套需求时，请使用 container 属性将第二个弹层渲染到第一个弹层内部, 这样不会因为点击第二个弹窗导致第一个弹窗消失。
 
 ```jsx
 import Overlay from '@alifd/overlay';
@@ -22,7 +22,8 @@ const style = {
 const overlay = (<div style={style}>
     <Popup overlay={<div style={style}><p>Hello World From Second Overlay!</p></div>}
         triggerType="click"
-        container={trigger => trigger.parentNode}>
+        container={trigger => trigger.parentNode}
+    >
         <button>Open second overlay</button>
     </Popup>
     <p>Hello World From First Overlay!</p>

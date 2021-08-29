@@ -80,8 +80,6 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     delay = 200,
     overlayProps = {},
     safeNode,
-    beforePosition,
-    onPosition,
     ...others
   } = props;
 
@@ -216,7 +214,6 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     <Overlay
       {...others}
       {...overlayOtherProps}
-      beforePosition={beforePosition}
       placement={placement}
       container={() => container(triggerRef.current)}
       safeNode={safeNodes}

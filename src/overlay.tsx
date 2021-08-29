@@ -107,12 +107,12 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
 
   const position = fixed ? 'fixed' : 'absolute';
   const [firstVisible, setFirst] = useState(visible);
-  const [,forceUpdate] = useState(null);
+  const [, forceUpdate] = useState(null);
   const positionStyleRef = useRef<CSSProperties>({ position });
 
   const targetRef = useRef(null);
-  const overlayRef= useRef(null);
-  const containerRef= useRef(null);
+  const overlayRef = useRef(null);
+  const containerRef = useRef(null);
   const maskRef = useRef(null);
   const overflowRef = useRef<Array<HTMLElement>>([]);
 
@@ -177,6 +177,8 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
       return;
     }
 
+    console.log('click', e)
+
     // 点击遮罩关闭
     if (hasMask && canCloseByMask && maskRef && maskRef.current === e.target) {
       onRequestClose(e);
@@ -209,23 +211,25 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     if (!visible) {
       return;
     }
+    console.log('keydown', e)
+
     if (e.keyCode === 27 && canCloseByEsc) {
       onRequestClose(e);
     }
   }
   useListener(document.body, 'keydown', keydownEvent as any, false, !!(visible && overlayRef.current && canCloseByEsc));
 
-  const scrollEvent =  (e: OverlayEvent) => {
+  const scrollEvent = (e: OverlayEvent) => {
     if (!visible) {
       return;
     }
-    // console.log(e)
+    console.log('scroll', e)
     updatePosition();
   }
 
   useListener(overflowRef.current, 'scroll', scrollEvent as any, false, !!(visible && overlayRef.current && overflowRef.current.length))
 
-  // 有弹窗情况下在 body 增加 overflow:hidden
+  // 有弹窗情况下在 body 增加 overflow:hidden，两个弹窗同时存在也没问题，会按照堆的方式依次 pop
   useEffect(() => {
     if (visible && hasMask) {
       const originStyle = document.body.getAttribute('style');

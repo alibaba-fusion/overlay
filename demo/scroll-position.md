@@ -6,6 +6,7 @@ order: 7
 遇到有 overflow 滚动的弹窗，会自动监听滚动实时弹窗计算位置
 
 ```jsx
+import { useState } from 'react';
 import Overlay from '@alifd/overlay';
 
 const { Popup } = Overlay;
@@ -18,25 +19,30 @@ const style = {
     boxShadow: '2px 2px 20px rgba(0, 0, 0, 0.15)'
 };
 
-ReactDOM.render(
-    <div id="a" style={{
+const App  = () => {
+    const [position, setPosition] = useState({});
+
+    return <div id="a" style={{
         position: 'relative',
         height: 150,
         padding: 30,
         border: '1px solid #eee',
-        overflowY: 'scroll',
-        overflowX: 'hidden'
-
+        overflow: 'auto',
     }}>
         <Popup 
-            overlay={<div style={style}>Hello World From Popup!</div>}
+            overlay={<div style={style}>top: {position.top} <br/> left: {position.left}</div>}
             placement="bottomLeft"
             triggerType="click"
+            onPosition={({style}) => {
+                setPosition(style);
+            }}
             >
             <button style={{marginTop: 30}}>Open</button>
         </Popup>
-        <div style={{ height: '300px' }} />
+        <div style={{ height: 300, width: 1200 }} />
     </div>
-    , mountNode);
+}
+
+ReactDOM.render( <App/>, mountNode);
 ```
 

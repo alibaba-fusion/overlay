@@ -39,6 +39,8 @@ class Demo extends React.Component {
                 </button>
                 <Overlay 
                     visible={this.state.visible}
+                    points={['lt', 'tr']}
+                    offset={[4, 0]}
                     target={() => this.btn}
                     safeNode={() => this.btn}
                     onRequestClose={this.onClose}

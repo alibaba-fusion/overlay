@@ -1,12 +1,26 @@
 ---
-title: 遮罩层
-order: 1
+title: 在fixed弹窗中滚动
+order: 2
 ---
 
 带有遮罩的弹层。
 
 ```jsx
 import Overlay from '@alifd/overlay';
+const { Popup } = Overlay;
+
+const style = {
+    width: 300,
+    height: 100,
+    padding: 10,
+    background: '#fff',
+    borderRadius: 2,
+    boxShadow: '2px 2px 20px rgba(0, 0, 0, 0.15)'
+}
+
+const overlay = <span style={style} >
+    Hello World From Popup!
+</span>;
 
 class Demo extends React.Component {
     constructor(props) {
@@ -79,16 +93,15 @@ class Demo extends React.Component {
                                     pointerEvents: 'auto',
                                     margin: '0 auto',
                                     width: 200,
+                                    height: 1200,
                                     background: '#fff',
                                     borderRadius: 2,
                                     boxShadow: '0 3px 6px -4px #0000001f, 0 6px 16px #00000014, 0 9px 28px 8px #0000000d',
                                 }}
                             >
-                                Title
-                                <div style={{padding: '1400px 8px 8px 80px'}}>
-                                    <button onClick={this.onClose}>ok</button>
-                                    <button onClick={this.onClose} style={{marginLeft: 8}}>cancel</button>
-                                </div>
+                                <Popup overlay={overlay} >
+                                    <button >click</button>
+                                </Popup>
                             </div>   
                         </div> 
                     </div>

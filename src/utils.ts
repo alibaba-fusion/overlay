@@ -152,7 +152,11 @@ export const getOverflowNodes = (targetNode: HTMLElement, targetContainer: HTMLE
 
         const overflow = getStyle(calcContainer, 'overflow');
         if (overflow.match(/auto|scroll/)) {
-            overflowNodes.push(calcContainer)
+            const {clientWidth, clientHeight, scrollWidth, scrollHeight} = calcContainer;
+            if (clientHeight !== scrollHeight || clientWidth !== scrollWidth) {
+                // console.log('overflow node is: ', calcContainer )
+                overflowNodes.push(calcContainer)
+            }
         }
 
         calcContainer = calcContainer.parentNode as HTMLElement;
