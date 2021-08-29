@@ -18,16 +18,13 @@ const style = {
     boxShadow: '2px 2px 20px rgba(0, 0, 0, 0.15)'
 }
 
-const overlay = <span style={style} >
-    Hello World From Popup!
-</span>;
-
 class Demo extends React.Component {
     constructor(props) {
         super(props);
 
         this.state = {
-            visible: false
+            visible: false,
+            position: {},
         };
     }
 
@@ -45,6 +42,12 @@ class Demo extends React.Component {
         this.setState({
             visible: false
         });
+    }
+
+    onPosition = ({style}) => {
+        this.setState({
+            position: style
+        })
     }
 
     render() {
@@ -99,7 +102,10 @@ class Demo extends React.Component {
                                     boxShadow: '0 3px 6px -4px #0000001f, 0 6px 16px #00000014, 0 9px 28px 8px #0000000d',
                                 }}
                             >
-                                <Popup overlay={overlay} >
+                                <Popup 
+                                    overlay={<div style={style}>top: {this.state.position.top} <br/> left: {this.state.position.left}</div>}
+                                    onPosition={this.onPosition}
+                                    >
                                     <button >click</button>
                                 </Popup>
                             </div>   

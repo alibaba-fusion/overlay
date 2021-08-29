@@ -276,6 +276,7 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
     },
     style: {
       position,
+      // transform: `translate3d(${left}px, ${top}px, 0px)`,
       left: left,
       top: top,
     }
