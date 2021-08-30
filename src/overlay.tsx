@@ -3,7 +3,7 @@ import { CSSProperties, ReactElement } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import ReactDOM from 'react-dom';
 import getPlacements, { pointsType, placementType } from './placement';
-import { useListener, setStyle, getContainer, throttle, callRef, getOverflowNodes } from './utils';
+import { useListener, setStyle, getContainer, throttle, callRef, getOverflowNodes, getScrollbarWidth } from './utils';
 
 export interface OverlayEvent extends MouseEvent, KeyboardEvent {
   target: EventTarget | null;
@@ -76,6 +76,29 @@ export interface OverlayProps {
   needAdjust?: boolean;
   autoHideScrollOverflow?: boolean;
 }
+
+
+const isScrollDisplay = function (element: HTMLElement) {
+  try {
+    const scrollbarStyle = window.getComputedStyle(element, '::-webkit-scrollbar');
+    return !scrollbarStyle || scrollbarStyle.getPropertyValue('display') !== 'none';
+  } catch (e) {
+    // ignore error for firefox
+  }
+
+  return true;
+};
+const hasScroll = (containerNode: HTMLElement) => {
+  const parentNode = containerNode.parentNode as HTMLElement;
+
+  return (
+    parentNode &&
+    parentNode.scrollHeight > parentNode.clientHeight &&
+    getScrollbarWidth() > 0 &&
+    isScrollDisplay(parentNode) &&
+    isScrollDisplay(containerNode)
+  );
+};
 
 const Overlay = React.forwardRef((props: OverlayProps, ref) => {
   const body = () => document.body;
@@ -240,6 +263,14 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     if (visible && hasMask) {
       const originStyle = document.body.getAttribute('style');
       setStyle(document.body, 'overflow', 'hidden');
+
+      if (hasScroll(document.body)) {
+        const scrollWidth = getScrollbarWidth();
+        if (scrollWidth) {
+          setStyle(document.body, 'width', `calc(100% - ${scrollWidth}px)`);
+        }
+      }
+
       return () => {
         document.body.setAttribute('style', originStyle || '');
       }
