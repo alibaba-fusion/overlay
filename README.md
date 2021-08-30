@@ -51,12 +51,11 @@ Popup 是对 Overlay 的封装，children作为触发节点，弹出一个浮层
 | onPosition             | 弹层定位完成时触发的事件<br/><br/>**签名**:<br/>Function(config: Object) => void<br/>**参数**:<br/>_config_: {Object} 定位的参数<br/>_config.config.points_: {Array} 对齐方式，如 ['cc', 'cc']（如果开启 needAdjust，可能和预先设置的 points 不同）<br/>_config.style.top_: {Number} 距离视口顶部距离<br/>_config.style.left_: {Number} 距离视口左侧距离 | Function       | noop |
 | autoFocus              | 弹层打开时是否让其中的元素自动获取焦点              | Boolean        | false |
 | needAdjust             | 当弹层由于页面滚动等情况不在可视区域时，是否自动调整定位以出现在可视区域                              | Boolean        | true  |
-| disableScroll          | 是否禁用页面滚动  | Boolean        | false |
+| autoHideScrollOverflow | 当trigger外面有滚动条，滚动到不可见区域后隐藏弹窗 | Boolean        | true  |
 | cache                  | 隐藏时是否保留子节点                       | Boolean        | false |
 | safeNode               | 安全节点，当点击 document 的时候，如果包含该节点则不会关闭弹层，如果是函数需要返回 ref，如果是字符串则是该 DOM 的 id，也可以直接传入 DOM 节点，或者以上值组成的数组            | any            | - |
 | wrapperClassName       | 弹层的根节点的样式类                       | String         | - |
 | wrapperStyle           | 弹层的根节点的内联样式                      | Object         | - |
-| animation              | 配置动画的播放方式，支持 { in: 'enter-class', out: 'leave-class' } 的对象参数，如果设置为 false，则不播放动画。 请参考 Animate 组件的文档获取可用的动画名 | Object/Boolean | { in: 'expandInDown', out: 'expandOutUp' } |
 
 ### Overlay.Popup
 
@@ -73,5 +72,4 @@ Popup 是对 Overlay 的封装，children作为触发节点，弹出一个浮层
 | onVisibleChange     | 弹层显示或隐藏时触发的回调函数<br/><br/>**签名**:<br/>Function(visible: Boolean, type: String, e: Object) => void<br/>**参数**:<br/>_visible_: {Boolean} 弹层是否显示<br/>_type_: {String} 触发弹层显示或隐藏的来源 fromTrigger 表示由trigger的点击触发； docClick 表示由document的点击触发<br/>_e_: {Object} DOM事件 | Function     | noop                      |
 | disabled            | 设置此属性，弹层无法显示或隐藏| Boolean      | false                          |
 | delay               | 弹层显示或隐藏的延时时间（以毫秒为单位），在 triggerType 被设置为 hover 时生效   | Number       | 200                            |
-| canCloseByTrigger   | trigger 是否可以关闭弹层   | Boolean      | true                           |
 | followTrigger       | 是否跟随trigger滚动  | Boolean      | false 

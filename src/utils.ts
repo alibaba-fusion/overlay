@@ -1,55 +1,10 @@
 import { useEffect, useCallback } from 'react'
 
-export interface onReturn {
-    off: Function
-}
-
-/**
- * 取消事件绑定
- * @param  {*}   node       DOM节点或任何可以绑定事件的对象
- * @param  {String}   eventName  事件名
- * @param  {Function} callback   回调方法
- * @param  {Boolean}   [useCapture=false] 是否开启事件捕获优先
- */
-export function off(node: HTMLElement, eventName: string, callback: EventListenerOrEventListenerObject, useCapture: boolean) {
-    /* istanbul ignore else */
-    if (node.removeEventListener) {
-        node.removeEventListener(eventName, callback, useCapture || false);
-    }
-}
-
-/**
- * 绑定事件
- * @param  {*}   node       DOM节点或任何可以绑定事件的对象
- * @param  {String}   eventName  事件名
- * @param  {Function} callback   回调方法
- * @param  {Boolean}   useCapture 是否开启事件捕获优先
- * @returns {Object} 返回的object中包含一个off方法，用于取消事件监听
- *
- * @example
- * const handler = events.on(document.body, 'click', e => {
- *     // handle click ...
- * });
- * // 取消事件绑定
- * handler.off();
- */
-export function on(node: HTMLElement, eventName: string, callback: EventListenerOrEventListenerObject, useCapture: boolean) {
-    /* istanbul ignore else */
-    if (node.addEventListener) {
-        node.addEventListener(eventName, callback, useCapture || false);
-    }
-
-    return {
-        off: () => off(node, eventName, callback, useCapture)
-    };
-}
-
-
 export function useListener(nodeList: HTMLElement | Array<HTMLElement>, eventName: string, callback: EventListenerOrEventListenerObject, useCapture: boolean, condition: boolean) {
     useEffect(() => {
         if (condition) {
             if (!Array.isArray(nodeList)) {
-                nodeList= [nodeList]
+                nodeList = [nodeList]
             }
             nodeList.forEach(n => {
                 n && n.addEventListener && n.addEventListener(eventName, callback, useCapture || false);
@@ -57,7 +12,7 @@ export function useListener(nodeList: HTMLElement | Array<HTMLElement>, eventNam
 
             return () => {
                 Array.isArray(nodeList) && nodeList.forEach(n => {
-                    n && n.removeEventListener &&  n.removeEventListener(eventName, callback, useCapture || false);
+                    n && n.removeEventListener && n.removeEventListener(eventName, callback, useCapture || false);
                 });
             }
         }
@@ -90,7 +45,7 @@ export function makeChain(...fns: any[]) {
     }, fns);
 }
 
-export function callRef(ref:any, element: HTMLElement) {
+export function callRef(ref: any, element: HTMLElement) {
     if (!ref) {
         return;
     }
@@ -119,6 +74,11 @@ export function saveRef(ref: any) {
     }, [])
 }
 
+/**
+ * 获取 position != static 的容器
+ * @param container 
+ * @returns 
+ */
 export const getContainer = (container: HTMLElement) => {
     if (typeof document === undefined) {
         return container;
@@ -136,6 +96,12 @@ export const getContainer = (container: HTMLElement) => {
     return calcContainer;
 };
 
+/**
+ * 获取会滚动的元素
+ * @param targetNode 
+ * @param targetContainer 
+ * @returns 
+ */
 export const getOverflowNodes = (targetNode: HTMLElement, targetContainer: HTMLElement) => {
     if (typeof document === undefined) {
         return [];
@@ -146,13 +112,16 @@ export const getOverflowNodes = (targetNode: HTMLElement, targetContainer: HTMLE
     let calcContainer: HTMLElement = targetNode;
 
     while (true) {
-        if (!calcContainer || calcContainer === targetContainer || calcContainer === document.documentElement) {
+        if (!calcContainer
+            || calcContainer === targetContainer
+            || calcContainer === document.body
+            || calcContainer === document.documentElement) {
             break;
         }
 
         const overflow = getStyle(calcContainer, 'overflow');
         if (overflow.match(/auto|scroll/)) {
-            const {clientWidth, clientHeight, scrollWidth, scrollHeight} = calcContainer;
+            const { clientWidth, clientHeight, scrollWidth, scrollHeight } = calcContainer;
             if (clientHeight !== scrollHeight || clientWidth !== scrollWidth) {
                 // console.log('overflow node is: ', calcContainer )
                 overflowNodes.push(calcContainer)
@@ -215,7 +184,12 @@ export function debounce(func: Function, wait: number) {
     }
 }
 
-export function getTopLeft(node: HTMLElement) {
+/**
+ * 元素相对于可视区的 left/top
+ * @param node 
+ * @returns 
+ */
+export function getViewTopLeft(node: HTMLElement) {
     /**
      * documentElement
      */

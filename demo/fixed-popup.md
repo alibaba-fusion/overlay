@@ -12,7 +12,7 @@ const { Popup } = Overlay;
 
 const style = {
     width: 300,
-    height: 100,
+    height: 150,
     padding: 10,
     background: '#fff',
     borderRadius: 2,
@@ -152,6 +152,7 @@ const Demo = () => {
                          <Popup 
                             overlay={<span style={style}>left: {position2.left} top: {position2.top}</span>} 
                             onPosition={({style}) => setPosition2(style)}
+                            placement="rightBottom"
                         >
                             <button>打开后滚动试试</button>
                         </Popup>

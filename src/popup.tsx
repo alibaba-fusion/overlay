@@ -60,6 +60,11 @@ export interface PopupProps {
    * 是否自动调整弹窗位置
    */
   needAdjust?: boolean;
+  /**
+   * 滚动超出的时候隐藏
+   */
+   autoHideScrollOverflow?: boolean;
+   followTrigger?: boolean;
 }
 
 const Popup = React.forwardRef((props: PopupProps, ref) => {
@@ -84,6 +89,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     delay = 200,
     overlayProps = {},
     safeNode,
+    followTrigger = false,
     ...others
   } = props;
 
@@ -211,7 +217,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
 
   const newOverlay = React.cloneElement(overlayChild, {
     ref: makeChain(saveRef(overlayRef), saveRef(ref), saveRef((overlayChild as any).ref))
-  })
+  });
 
   return <>
     {child && React.cloneElement(child, triggerProps)}
@@ -219,7 +225,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
       {...others}
       {...overlayOtherProps}
       placement={placement}
-      container={() => container(triggerRef.current)}
+      container={followTrigger? () => triggerRef.current && triggerRef.current.parentNode : () => container(triggerRef.current)}
       safeNode={safeNodes}
       visible={visible}
       target={() => triggerRef.current}

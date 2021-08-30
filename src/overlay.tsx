@@ -74,6 +74,7 @@ export interface OverlayProps {
   beforePosition?: Function;
   onPosition?: Function;
   needAdjust?: boolean;
+  autoHideScrollOverflow?: boolean;
 }
 
 const Overlay = React.forwardRef((props: OverlayProps, ref) => {
@@ -131,10 +132,12 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     if (!overlayNode || !containerNode || !targetNode) {
       return;
     }
+
     const placements = getPlacements({
       target: targetNode,
       overlay: overlayNode,
       container: containerNode,
+      scrollNode: overflowRef.current,
       points, offset,
       position,
       placement,

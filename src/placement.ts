@@ -1,5 +1,5 @@
 import { CSSProperties } from 'react';
-import { getTopLeft } from './utils';
+import { getViewTopLeft } from './utils';
 
 type point = 'tl' | 'tc' | 'tr' | 'cl' | 'cc' | 'cr' | 'bl' | 'bc' | 'br';
 export type pointsType = [point, point];
@@ -10,9 +10,13 @@ export interface PlacementsConfig {
   target: HTMLElement;
   overlay: HTMLElement;
   /**
-   * 弹窗的位置相对该节点进行计算，position != static
+   * 相对容器，position != static
    */
   container: HTMLElement;
+  /**
+   * 滚动节点
+   */
+  scrollNode?: Array<HTMLElement>;
   /**
    * 弹窗 overlay 相对于目标元素 target 的位置
    */
@@ -28,6 +32,10 @@ export interface PlacementsConfig {
   offset?: number[];
   beforePosition?: Function;
   needAdjust?: boolean;
+  /**
+   * 滚动超出的时候隐藏
+   */
+  autoHideScrollOverflow?: boolean;
 }
 
 export interface placementMapType {
@@ -76,6 +84,7 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
     target,
     overlay,
     container,
+    scrollNode,
     placement: oplacement,
     placementOffset = 0,
     points: opoints = ['tl', 'bl'],
@@ -83,6 +92,7 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
     position = 'absolute',
     beforePosition,
     needAdjust = true,
+    autoHideScrollOverflow = true
   } = config;
 
   if (position === 'fixed') {
@@ -109,7 +119,7 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
    * scrollLeft: 容器左右滚动距离
    */
   const { width: twidth, height: theight, left: tleft, top: ttop } = target.getBoundingClientRect();
-  const { left: cleft, top: ctop } = getTopLeft(container);
+  const { left: cleft, top: ctop } = getViewTopLeft(container);
   const { scrollWidth: cwidth, scrollHeight: cheight, scrollTop: cscrollTop, scrollLeft: cscrollLeft } = container;
   const { width: owidth, height: oheight } = overlay.getBoundingClientRect();
 
@@ -276,13 +286,23 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
       placement,
       points,
     },
-    style: {
+    style: <CSSProperties>{
       position,
       // transform: `translate3d(${left}px, ${top}px, 0px)`,
       left: left,
       top: top,
     }
   };
+
+  // 滚动后 target 不在可视区域了，则隐藏弹窗
+  if (autoHideScrollOverflow && placement && scrollNode.length) {
+    scrollNode.forEach(node => {
+      const { top, left, width, height } = node.getBoundingClientRect();
+      if (ttop + theight < top || ttop > top + height || tleft + twidth < left || tleft > left + width) {
+        result.style.display = 'none';
+      }
+    });
+  }
 
   if (beforePosition && typeof beforePosition) {
     return beforePosition(result);
