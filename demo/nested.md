@@ -19,9 +19,10 @@ const style = {
     boxShadow: '2px 2px 20px rgba(0, 0, 0, 0.15)'
 }
 
-const overlay = (<div style={style}>
+const overlay = (<div style={{...style}}>
     <Popup overlay={<div style={style}><p>Hello World From Second Overlay!</p></div>}
-        triggerType="click"
+        placement="topLeft"
+        needAdjust={false}
         container={trigger => trigger.parentNode}
     >
         <button>Open second overlay</button>
@@ -32,7 +33,7 @@ const overlay = (<div style={style}>
 ReactDOM.render(
     <Popup 
         overlay={overlay}
-        triggerType="click">
+        >
         <button>Open first overlay</button>
     </Popup>
     , mountNode);

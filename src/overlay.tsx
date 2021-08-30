@@ -73,6 +73,7 @@ export interface OverlayProps {
   onMouseLeave?: () => void;
   beforePosition?: Function;
   onPosition?: Function;
+  needAdjust?: boolean;
 }
 
 const Overlay = React.forwardRef((props: OverlayProps, ref) => {
@@ -102,6 +103,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     beforePosition,
     onPosition,
     cache = false,
+    needAdjust,
     ...others
   } = props;
 
@@ -137,7 +139,8 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
       position,
       placement,
       placementOffset,
-      beforePosition
+      beforePosition,
+      needAdjust
     });
 
     positionStyleRef.current = placements.style;

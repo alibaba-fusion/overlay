@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { CSSProperties, ReactElement } from 'react';
 
 import Overlay, { OverlayEvent } from './overlay';
@@ -56,6 +56,10 @@ export interface PopupProps {
   safeNode?: Array<() => Element>;
   beforePosition?: Function;
   onPosition?: Function;
+  /**
+   * 是否自动调整弹窗位置
+   */
+  needAdjust?: boolean;
 }
 
 const Popup = React.forwardRef((props: PopupProps, ref) => {

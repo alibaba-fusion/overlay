@@ -27,6 +27,7 @@ export interface PlacementsConfig {
   points?: pointsType;
   offset?: number[];
   beforePosition?: Function;
+  needAdjust?: boolean;
 }
 
 export interface placementMapType {
@@ -81,6 +82,7 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
     offset = [0, 0],
     position = 'absolute',
     beforePosition,
+    needAdjust = true,
   } = config;
 
   if (position === 'fixed') {
@@ -238,7 +240,7 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
     }
   }
 
-  if (placement && shouldResizePlacement(left, top)) {
+  if (needAdjust && placement && shouldResizePlacement(left, top)) {
     const nplacement = getNewPlacement(left, top, placement);
     // step2: 空间不够，替换位置重新计算位置
     if (placement !== nplacement) {
