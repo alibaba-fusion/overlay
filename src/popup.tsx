@@ -128,7 +128,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
 
   const handleClick = (e: OverlayEvent) => {
     e.targetType = 'trigger';
-    handleVisibleChange(true, e);
+    handleVisibleChange(!visible, e);
   }
 
   const handleKeyDown = (e: OverlayEvent) => {
@@ -202,18 +202,14 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
         triggerProps.onMouseLeave = makeChain(handleMouseLeave('trigger'), onMouseLeave);
         overlayOtherProps.onMouseEnter = makeChain(handleMouseEnter('overlay'), overlayProps.onMouseEnter);
         overlayOtherProps.onMouseLeave = makeChain(handleMouseLeave('overlay'), overlayProps.onMouseLeave);
-        // hover不允许点击关闭
-        safeNodes.push(() => triggerRef.current);
         break;
       case 'focus':
         triggerProps.onFocus = makeChain(handleFocus, onFocus);
         triggerProps.onBlur = makeChain(handleBlur, onBlur);
-        // focus不允许点击关闭
-        safeNodes.push(() => triggerRef.current);
         break;
     }
   });
-
+  safeNodes.push(() => triggerRef.current);
 
   const newOverlay = React.cloneElement(overlayChild, {
     ref: makeChain(saveRef(overlayRef), saveRef(ref), saveRef((overlayChild as any).ref))

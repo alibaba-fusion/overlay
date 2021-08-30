@@ -211,7 +211,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     }
   }
 
-  useListener(document.body, 'click', clickEvent as any, false, !!(visible && overlayRef.current));
+  useListener(document.body, 'mousedown', clickEvent as any, false, !!(visible && overlayRef.current));
 
   const keydownEvent = (e: OverlayEvent) => {
     if (!visible) {

@@ -18,6 +18,10 @@ export interface PlacementsConfig {
    */
   scrollNode?: Array<HTMLElement>;
   /**
+   * target 超出容器时隐藏 (有scrollNode时生效)
+   */
+  autoHideScrollOverflow?: boolean;
+  /**
    * 弹窗 overlay 相对于目标元素 target 的位置
    */
   placement?: placementType;
@@ -32,10 +36,6 @@ export interface PlacementsConfig {
   offset?: number[];
   beforePosition?: Function;
   needAdjust?: boolean;
-  /**
-   * 滚动超出的时候隐藏
-   */
-  autoHideScrollOverflow?: boolean;
 }
 
 export interface placementMapType {
