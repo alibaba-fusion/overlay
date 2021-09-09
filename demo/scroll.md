@@ -30,7 +30,7 @@ const App  = () => {
         overflow: 'auto',
     }}>
         <Popup 
-            overlay={<div style={style}>top: {position.top} <br/> left:{position.left}</div>}
+            overlay={<div style={style}>transform: {JSON.stringify(position)}</div>}
             placement="bottomLeft"
             triggerType="click"
             container={ target => target.parentNode}

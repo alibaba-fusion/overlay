@@ -23,6 +23,7 @@ export function useListener(nodeList: HTMLElement | Array<HTMLElement>, eventNam
     return;
 }
 
+
 /**
  * 将N个方法合并为一个链式调用的方法
  * @return {Function}     合并后的方法
@@ -30,19 +31,19 @@ export function useListener(nodeList: HTMLElement | Array<HTMLElement>, eventNam
  * @example
  * func.makeChain(this.handleChange, this.props.onChange);
  */
-export function makeChain(...fns: any[]) {
+ export function makeChain(...fns: any[]) {
     if (fns.length === 1) {
         return fns[0];
     }
 
-    return useCallback((...args: any[]) => {
+    return (...args: any[]) => {
         for (let i = 0, j = fns.length; i < j; i++) {
             if (fns[i] && fns[i].apply) {
                 //@ts-ignore
                 fns[i].apply(this, args);
             }
         }
-    }, fns);
+    };
 }
 
 export function callRef(ref: any, element: HTMLElement) {
@@ -63,7 +64,7 @@ export function saveRef(ref: any) {
     if (!ref) {
         return null;
     }
-    return useCallback((element: any) => {
+    return (element: any) => {
         if (typeof ref === 'string') {
             throw new Error(`can not set ref string for ${ref}`);
         } else if (typeof ref === 'function') {
@@ -71,7 +72,7 @@ export function saveRef(ref: any) {
         } else if (Object.prototype.hasOwnProperty.call(ref, 'current')) {
             ref.current = element;
         }
-    }, [])
+    }
 }
 
 /**
@@ -97,12 +98,12 @@ export const getContainer = (container: HTMLElement) => {
 };
 
 /**
- * 获取会滚动的元素
+ * 获取 target 和 container 之间会滚动的元素 (不包含 target、container)
  * @param targetNode 
- * @param targetContainer 
+ * @param container 
  * @returns 
  */
-export const getOverflowNodes = (targetNode: HTMLElement, targetContainer: HTMLElement) => {
+export const getOverflowNodes = (targetNode: HTMLElement, container: HTMLElement) => {
     if (typeof document === undefined) {
         return [];
     }
@@ -112,8 +113,9 @@ export const getOverflowNodes = (targetNode: HTMLElement, targetContainer: HTMLE
     let calcContainer: HTMLElement = targetNode;
 
     while (true) {
+        // 忽略 body/documentElement, 不算额外滚动元素
         if (!calcContainer
-            || calcContainer === targetContainer
+            || calcContainer === container
             || calcContainer === document.body
             || calcContainer === document.documentElement) {
             break;
@@ -133,6 +135,25 @@ export const getOverflowNodes = (targetNode: HTMLElement, targetContainer: HTMLE
 
     return overflowNodes;
 };
+
+export function getViewPort(container: HTMLElement) {
+    let calcContainer: HTMLElement = container;
+
+    while (!calcContainer) {
+        const overflow = getStyle(calcContainer, 'overflow');
+        if (overflow.match(/auto|scroll|hidden/)) {
+            const { clientWidth, clientHeight, scrollWidth, scrollHeight } = calcContainer;
+            if (clientHeight !== scrollHeight || clientWidth !== scrollWidth) {
+                // console.log('overflow node is: ', calcContainer )
+                return calcContainer;
+            }
+        }
+
+        calcContainer = calcContainer.parentNode as HTMLElement;
+    }
+
+    return document.documentElement;
+}
 
 export function getStyle(elt: Element, name: string) {
     const style = window.getComputedStyle(elt, null)

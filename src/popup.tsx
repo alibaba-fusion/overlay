@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { CSSProperties, ReactElement } from 'react';
 
 import Overlay, { OverlayEvent } from './overlay';
@@ -185,8 +185,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
   }
 
   const triggerProps: any = {
-    //@ts-ignore
-    ref: makeChain(saveRef(triggerRef), saveRef(child.ref))
+    ref: useCallback(makeChain(saveRef(triggerRef), saveRef((child as any).ref)), [])
   };
   const overlayOtherProps: any = {}
 
@@ -212,7 +211,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
   safeNodes.push(() => triggerRef.current);
 
   const newOverlay = React.cloneElement(overlayChild, {
-    ref: makeChain(saveRef(overlayRef), saveRef(ref), saveRef((overlayChild as any).ref))
+    ref: useCallback(makeChain(saveRef(overlayRef), saveRef(ref), saveRef((overlayChild as any).ref)), [])
   });
 
   return <>

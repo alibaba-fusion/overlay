@@ -1,5 +1,5 @@
 import { CSSProperties } from 'react';
-import { getViewTopLeft } from './utils';
+import { getViewTopLeft, getViewPort } from './utils';
 
 type point = 'tl' | 'tc' | 'tr' | 'cl' | 'cc' | 'cr' | 'bl' | 'bc' | 'br';
 export type pointsType = [point, point];
@@ -7,14 +7,20 @@ export type placementType = 'topLeft' | 'top' | 'topRight' | 'rightTop' | 'right
 
 export interface PlacementsConfig {
   position: 'absolute' | 'fixed';
+  /**
+   * 弹窗的目标定位元素
+   */
   target: HTMLElement;
+  /**
+   * 弹窗
+   */
   overlay: HTMLElement;
   /**
-   * 相对容器，position != static
+   * 相对容器，position != static 的节点
    */
   container: HTMLElement;
   /**
-   * 滚动节点
+   * 滚动节点。 target 到 container 之间的滚动节点 (不包含 target/container/body/documetnElement 元素)
    */
   scrollNode?: Array<HTMLElement>;
   /**
@@ -194,7 +200,18 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
 
   let { left, top, points } = getXY(placement);
 
-  function shouldResizePlacement(l: number, t: number) {
+  function shouldResizePlacement(l: number, t: number, viewport: HTMLElement) {
+    if (viewport !== container) {
+      // 说明 container 不具备滚动属性
+      const { left: vleft, top: vtop } = getViewTopLeft(viewport);
+      const { scrollWidth: vwidth, scrollHeight: vheight, scrollTop: vscrollTop, scrollLeft: vscrollLeft } = viewport;
+
+      const nt = t + ctop - vtop + vscrollTop;
+      const nl = l + cleft - vleft + vscrollLeft;
+
+      return nt < 0 || nl < 0 || nt + oheight > vheight || nl + owidth > vwidth;
+    }
+
     return t < 0 || l < 0 || t + oheight > cheight || l + owidth > cwidth;
   }
 
@@ -250,13 +267,16 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
     }
   }
 
-  if (needAdjust && placement && shouldResizePlacement(left, top)) {
+  const viewport = getViewPort(container);
+
+  // 根据 viewport 重新计算位置
+  if (needAdjust && placement && shouldResizePlacement(left, top, viewport)) {
     const nplacement = getNewPlacement(left, top, placement);
     // step2: 空间不够，替换位置重新计算位置
     if (placement !== nplacement) {
       let { left: nleft, top: ntop } = getXY(nplacement);
 
-      if (shouldResizePlacement(nleft, ntop)) {
+      if (shouldResizePlacement(nleft, ntop, viewport)) {
         const nnplacement = getNewPlacement(nleft, ntop, nplacement);
         // step3: 空间依然不够，说明xy轴至少有一个方向是怎么更换位置都不够的。停止计算开始补偿逻辑
         if (nplacement !== nnplacement) {
@@ -288,14 +308,21 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
     },
     style: <CSSProperties>{
       position,
-      // transform: `translate3d(${left}px, ${top}px, 0px)`,
-      left: left,
-      top: top,
+      left: Math.round(left),
+      top: Math.round(top),
     }
   };
 
-  // 滚动后 target 不在可视区域了，则隐藏弹窗
+  /**
+   * 滚动隐藏弹窗逻辑
+   * 触发条件: target 和 document.body 之间存在 overflow 滚动元素， target 进入不可见区域
+   */
   if (autoHideScrollOverflow && placement && scrollNode.length) {
+    // 滚动改成 transform 提高性能
+    result.style.transform = `translate3d(${result.style.left}px, ${result.style.top}px, 0px)`;
+    result.style.left = 0;
+    result.style.top = 0;
+
     scrollNode.forEach(node => {
       const { top, left, width, height } = node.getBoundingClientRect();
       if (ttop + theight < top || ttop > top + height || tleft + twidth < left || tleft > left + width) {

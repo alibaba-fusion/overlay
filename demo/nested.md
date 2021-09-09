@@ -20,9 +20,7 @@ const style = {
 }
 
 const overlay = (<div style={{...style}}>
-    <Popup overlay={<div style={style}><p>Hello World From Second Overlay!</p></div>}
-        placement="rightTop"
-        needAdjust={false}
+    <Popup overlay={<div style={style}><p>挂载容器没有overflow:hidden, viewport 为 body</p></div>}
         container={trigger => trigger.parentNode}
     >
         <button>Open second overlay</button>

@@ -98,7 +98,7 @@ const Demo = () => {
                             }}
                         >
                                 <Popup 
-                                    overlay={<span style={style}>left: {position.left} top: {position.top}</span>} 
+                                    overlay={<span style={style}>{position.transform}</span>} 
                                     onPosition={({style}) => setPosition(style)}
                                 >
                                     <button>打开后滚动试试</button>
@@ -150,9 +150,8 @@ const Demo = () => {
                         }}
                     >
                          <Popup 
-                            overlay={<span style={style}>left: {position2.left} top: {position2.top}</span>} 
+                            overlay={<span style={style}>{position2.transform}</span>} 
                             onPosition={({style}) => setPosition2(style)}
-                            placement="rightBottom"
                         >
                             <button>打开后滚动试试</button>
                         </Popup>

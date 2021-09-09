@@ -31,7 +31,7 @@ const App  = () => {
         overflow: 'auto',
     }}>
         <Popup 
-            overlay={<div style={style}>top: {position.top} <br/> left: {position.left}</div>}
+            overlay={<div style={style}>transform: {position.transform}</div>}
             placement="bottomLeft"
             onPosition={({style}) => {
                 setPosition(style);
@@ -41,7 +41,7 @@ const App  = () => {
         </Popup>
         <br/>
         <Popup 
-            overlay={<div style={style}>top: {position2.top} <br/> left: {position2.left}</div>}
+            overlay={<div style={style}>transform: {position2.transform}</div>}
             placement="bottomLeft"
             onPosition={({style}) => {
                 setPosition2(style);
