@@ -31,7 +31,7 @@ export function useListener(nodeList: HTMLElement | Array<HTMLElement>, eventNam
  * @example
  * func.makeChain(this.handleChange, this.props.onChange);
  */
- export function makeChain(...fns: any[]) {
+export function makeChain(...fns: any[]) {
     if (fns.length === 1) {
         return fns[0];
     }
@@ -232,7 +232,7 @@ export function getViewTopLeft(node: HTMLElement) {
  * 获取默认的滚动条大小
  * @return {Number} width
  */
- export function getScrollbarWidth() {
+export function getScrollbarWidth() {
     const scrollDiv = document.createElement('div');
     scrollDiv.className += 'just-to-get-scrollbar-size';
 
@@ -248,4 +248,76 @@ export function getViewTopLeft(node: HTMLElement) {
     document.body.removeChild(scrollDiv);
 
     return scrollbarWidth;
+}
+
+/**
+ * 元素是否可见
+ * @private
+ * @param   {Element}  node
+ * @return  {Boolean}
+ */
+function _isVisible(node: HTMLElement) {
+    while (node) {
+        if (node === document.body || node === document.documentElement) {
+            break;
+        }
+        if (
+            node.style.display === 'none' ||
+            node.style.visibility === 'hidden'
+        ) {
+            return false;
+        }
+        node = node.parentNode as HTMLElement;
+    }
+    return true;
+}
+
+/**
+ * 元素是否可以获取焦点
+ * @private
+ * @param   {Element}  node
+ * @return  {Boolean}
+ */
+function _isFocusable(node: HTMLElement) {
+    const nodeName = node.nodeName.toLowerCase();
+    const tabIndex = parseInt(node.getAttribute('tabindex'), 10);
+    const hasTabIndex = !isNaN(tabIndex) && tabIndex > -1;
+
+    if (_isVisible(node)) {
+        if (nodeName === 'input') {
+            //@ts-ignore
+            return !node.disabled && node.type !== 'hidden';
+        } else if (['select', 'textarea', 'button'].indexOf(nodeName) > -1) {
+            //@ts-ignore
+            return !node.disabled;
+        } else if (nodeName === 'a') {
+            return node.getAttribute('href') || hasTabIndex;
+        } else {
+            return hasTabIndex;
+        }
+    }
+    return false;
+}
+
+/**
+ * 列出能获取焦点的子节点
+ * @param  {Element} node 容器节点
+ * @return {Array<Element>}
+ */
+export function getFocusNodeList(node: HTMLElement) {
+    const res: any = [];
+    const nodeList = node.querySelectorAll('*');
+
+    nodeList.forEach((item: HTMLElement) => {
+        if (_isFocusable(item)) {
+            const method = item.getAttribute('data-auto-focus') ? 'unshift' : 'push';
+            res[method](item);
+        }
+    });
+
+    if (_isFocusable(node)) {
+        res.unshift(node);
+    }
+
+    return res;
 }

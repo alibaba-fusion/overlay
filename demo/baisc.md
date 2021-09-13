@@ -39,6 +39,7 @@ class Demo extends React.Component {
                 </button>
                 <Overlay 
                     visible={this.state.visible}
+                    cache
                     points={['lt', 'tr']}
                     offset={[4, 0]}
                     target={() => this.btn}

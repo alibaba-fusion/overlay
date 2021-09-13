@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useLayoutEffect } from 'react';
 import { CSSProperties, ReactElement } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import ReactDOM from 'react-dom';
 import getPlacements, { pointsType, placementType } from './placement';
-import { useListener, setStyle, getContainer, throttle, callRef, getOverflowNodes, getScrollbarWidth } from './utils';
+import { useListener, setStyle, getContainer, throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList } from './utils';
 
 export interface OverlayEvent extends MouseEvent, KeyboardEvent {
   target: EventTarget | null;
@@ -75,6 +75,10 @@ export interface OverlayProps {
   onPosition?: Function;
   needAdjust?: boolean;
   autoHideScrollOverflow?: boolean;
+  /**
+   * 是否自动聚焦弹窗
+   */
+  autoFocus?: boolean;
 }
 
 
@@ -128,6 +132,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     onPosition,
     cache = false,
     needAdjust,
+    autoFocus = false,
     ...others
   } = props;
 
@@ -141,6 +146,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
   const containerRef = useRef(null);
   const maskRef = useRef(null);
   const overflowRef = useRef<Array<HTMLElement>>([]);
+  const lastFocus = useRef(null);
 
   const child: ReactElement | undefined = React.Children.only(children);
   if (typeof (child as any).ref === 'string') {
@@ -189,10 +195,17 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
       const targetNode = (typeof target === 'string' ? () => document.getElementById(target) : target)();
       targetRef.current = targetNode;
 
-
       overflowRef.current = getOverflowNodes(targetNode, containerNode);
 
-      const ro = new ResizeObserver(throttle(updatePosition.bind(this, true), 100));
+      if(autoFocus) {
+        const focusableNodes = getFocusNodeList(node);
+        if (focusableNodes.length > 0 && focusableNodes[0]) {
+          lastFocus.current = document.activeElement;
+          focusableNodes[0].focus();
+        }
+      }
+
+      const ro = new ResizeObserver(throttle(updatePosition.bind(this), 100));
       ro.observe(containerNode);
 
       forceUpdate({});
@@ -206,7 +219,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
       return;
     }
 
-    console.log('click', e)
+    // console.log('click', e)
 
     // 点击遮罩关闭
     if (hasMask && canCloseByMask && maskRef && maskRef.current === e.target) {
@@ -234,13 +247,15 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     }
   }
 
+  // 这里用 mousedown 而不是用 click。
+  // click 是 mouseup 才触发。 eg: mousedown 在弹窗内部，然后按住不放到弹窗外 mouseup 结果弹窗关了。 https://github.com/alibaba-fusion/next/issues/742
   useListener(document.body, 'mousedown', clickEvent as any, false, !!(visible && overlayRef.current));
 
   const keydownEvent = (e: OverlayEvent) => {
     if (!visible) {
       return;
     }
-    console.log('keydown', e)
+    // console.log('keydown', e)
 
     if (e.keyCode === 27 && canCloseByEsc) {
       onRequestClose(e);
@@ -252,7 +267,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     if (!visible) {
       return;
     }
-    console.log('scroll', e)
+    // console.log('scroll', e)
     updatePosition();
   }
 
@@ -285,16 +300,25 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
   }, [visible]);
 
   // cache 情况下的模拟 onOpen/onClose
+  const overlayNode = overlayRef.current; // overlayRef.current 可能会异步变化，所以要先接下
   useEffect(() => {
-    if (cache && overlayRef.current) {
+    if (cache && overlayNode) {
       if (visible) {
-        typeof onOpen === 'function' && onOpen(overlayRef.current);
+        typeof onOpen === 'function' && onOpen(overlayNode);
         updatePosition();
       } else {
         typeof onClose === 'function' && onClose();
       }
     }
-  }, [visible, cache && overlayRef.current])
+  }, [visible, cache && overlayNode]);
+
+  // autoFocus 弹窗关闭后回到触发点
+  useEffect(() => {
+    if (!visible && autoFocus && lastFocus.current) {
+      lastFocus.current.focus();
+      lastFocus.current = null;
+    }
+  }, [!visible && autoFocus && lastFocus.current]);
 
   if (firstVisible === false) {
     return null;

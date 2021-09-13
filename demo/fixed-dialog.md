@@ -17,8 +17,7 @@ const Demo = () => {
 
     
     const onClose = (e) => {
-        console.log(/onclick/, e.target);
-        if (dialogRef.current && dialogRef.current.contains(e.target)) {
+        if (e.type === 'click' && dialogRef.current && dialogRef.current.contains(e.target)) {
             return;
         }
         setVisible(false);
@@ -49,6 +48,7 @@ const Demo = () => {
                 fixed
                 offset={[0, 0]}
                 onRequestClose={onClose}
+                autoFocus
             >
                 <div
                     style={{
@@ -77,6 +77,8 @@ const Demo = () => {
                             }}
                         >
                             with long content
+                            <br/>
+                            <input />
                             <div style={{padding: '1400px 8px 8px 8px'}}>
                                 <button onClick={onClose}>ok</button>
                                 <button onClick={onClose} style={{marginLeft: 8}}>cancel</button>

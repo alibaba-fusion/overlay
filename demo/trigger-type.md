@@ -19,7 +19,7 @@ const style = {
     borderRadius: 2,
     boxShadow: '2px 2px 20px rgba(0, 0, 0, 0.15)',
 }
-const overlay = (triggerType) => <span style={style}>
+const overlay = (triggerType) => <span style={style} className="overlay">
     {triggerType} to open!
 </span>;
 

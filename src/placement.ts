@@ -198,6 +198,7 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
     }
   }
 
+  // step1: 根据 placement 计算位置
   let { left, top, points } = getXY(placement);
 
   function shouldResizePlacement(l: number, t: number, viewport: HTMLElement) {
@@ -269,7 +270,8 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
 
   const viewport = getViewPort(container);
 
-  // 根据 viewport 重新计算位置
+  // step2: 根据 viewport（挂载容器不一定是可视区）重新计算位置. 根据可视区域优化位置
+  // 位置动态优化思路见 https://github.com/alibaba-fusion/overlay/issues/2
   if (needAdjust && placement && shouldResizePlacement(left, top, viewport)) {
     const nplacement = getNewPlacement(left, top, placement);
     // step2: 空间不够，替换位置重新计算位置
@@ -314,7 +316,7 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
   };
 
   /**
-   * 滚动隐藏弹窗逻辑
+   * step3: 滚动隐藏弹窗逻辑
    * 触发条件: target 和 document.body 之间存在 overflow 滚动元素， target 进入不可见区域
    */
   if (autoHideScrollOverflow && placement && scrollNode.length) {
