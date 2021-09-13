@@ -63,8 +63,9 @@ export interface PopupProps {
   /**
    * 滚动超出的时候隐藏
    */
-   autoHideScrollOverflow?: boolean;
-   followTrigger?: boolean;
+  autoHideScrollOverflow?: boolean;
+  followTrigger?: boolean;
+  canCloseByEsc?: boolean;
 }
 
 const Popup = React.forwardRef((props: PopupProps, ref) => {
@@ -79,7 +80,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     onVisibleChange = () => { },
     container = body,
     style = {},
-    placement="bottomLeft",
+    placement = "bottomLeft",
     onClick,
     onKeyDown,
     onMouseEnter,
@@ -218,10 +219,11 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
   return <>
     {child && React.cloneElement(child, triggerProps)}
     <Overlay
+      canCloseByEsc={false}
       {...others}
       {...overlayOtherProps}
       placement={placement}
-      container={followTrigger? () => triggerRef.current && triggerRef.current.parentNode : () => container(triggerRef.current)}
+      container={followTrigger ? () => triggerRef.current && triggerRef.current.parentNode : () => container(triggerRef.current)}
       safeNode={safeNodes}
       visible={visible}
       target={() => triggerRef.current}

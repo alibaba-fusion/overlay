@@ -1,6 +1,6 @@
 {
   "name": "@alifd/overlay",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "overlay base component",
   "files": [
     "demo/",
@@ -35,11 +35,12 @@
     "@iceworks/spec": "^1.0.0",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
+    "@wojtekmaj/enzyme-adapter-react-17": "^0.6.3",
+    "simulate-event": "^1.4.0",
     "build-plugin-component": "^1.0.0",
     "build-plugin-fusion": "^0.1.0",
     "build-plugin-moment-locales": "^0.1.0",
     "enzyme": "^3.10.0",
-    "enzyme-adapter-react-16": "^1.14.0",
     "eslint": "^6.8.0",
     "react": "^17.0.0",
     "react-dom": "^17.0.0",
