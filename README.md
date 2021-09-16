@@ -50,7 +50,7 @@ Popup 是对 Overlay 的封装，children作为触发节点，弹出一个浮层
 | beforePosition         | 弹层定位完成前触发的事件               | Function       | noop |
 | onPosition             | 弹层定位完成时触发的事件<br/><br/>**签名**:<br/>Function(config: Object) => void<br/>**参数**:<br/>_config_: {Object} 定位的参数<br/>_config.config.points_: {Array} 对齐方式，如 ['cc', 'cc']（如果开启 needAdjust，可能和预先设置的 points 不同）<br/>_config.style.top_: {Number} 距离视口顶部距离<br/>_config.style.left_: {Number} 距离视口左侧距离 | Function       | noop |
 | autoFocus              | 弹层打开时是否让其中的元素自动获取焦点              | Boolean        | false |
-| needAdjust             | 当弹层由于页面滚动等情况不在可视区域时，是否自动调整定位以出现在可视区域                              | Boolean        | true  |
+| autoAdjust             | 当弹层由于页面滚动等情况不在可视区域时，是否自动调整定位以出现在可视区域                              | Boolean        | true  |
 | autoHideScrollOverflow | 当trigger外面有滚动条，滚动到不可见区域后隐藏弹窗 | Boolean        | true  |
 | cache                  | 隐藏时是否保留子节点                       | Boolean        | false |
 | safeNode               | 安全节点，当点击 document 的时候，如果包含该节点则不会关闭弹层，如果是函数需要返回 ref，如果是字符串则是该 DOM 的 id，也可以直接传入 DOM 节点，或者以上值组成的数组            | any            | - |

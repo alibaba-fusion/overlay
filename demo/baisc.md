@@ -45,8 +45,8 @@ class Demo extends React.Component {
                     target={() => this.btn}
                     safeNode={() => this.btn}
                     onRequestClose={this.onClose}
-                    onOpen={()=>console.log(/open/)}
-                    onClose={()=>console.log(/close/)}
+                    afterOpen={()=>console.log(/open/)}
+                    afterClose={()=>console.log(/close/)}
                     >
                     <div style={{
                         width: 200,
@@ -56,6 +56,12 @@ class Demo extends React.Component {
                         boxShadow: '0 3px 6px -4px #0000001f, 0 6px 16px #00000014, 0 9px 28px 8px #0000000d'
                     }} />
                 </Overlay>
+
+                                <div id="dialog-popupcontainer" style={{ height: 300, overflow: 'auto' }}>
+<Overlay title="Welcome to Alibaba.com" visible container={() => document.getElementById("dialog-popupcontainer")}>
+                       <span> Start your business here by searching a popular product</span>
+                    </Overlay>
+                </div>
             </div>
         );
     }

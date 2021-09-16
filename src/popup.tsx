@@ -57,10 +57,10 @@ export interface PopupProps {
   beforePosition?: Function;
   onPosition?: Function;
   /**
-   * 是否自动调整弹窗位置
+   * 气泡被遮挡时自动调整位置
    */
-  needAdjust?: boolean;
-  /**
+   autoAdjust?: boolean;
+   /**
    * 滚动超出的时候隐藏
    */
   autoHideScrollOverflow?: boolean;

@@ -3,7 +3,7 @@ import { CSSProperties, ReactElement } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import ReactDOM from 'react-dom';
 import getPlacements, { pointsType, placementType } from './placement';
-import { useListener, setStyle, getContainer, throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList } from './utils';
+import { useListener, getStyle, setStyle, getContainer, throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList } from './utils';
 
 export interface OverlayEvent extends MouseEvent, KeyboardEvent {
   target: EventTarget | null;
@@ -42,13 +42,13 @@ export interface OverlayProps {
   onRequestClose?: (event: OverlayEvent) => void;
   cache?: boolean;
   /**
-   * 弹窗挂载成功的回调
+   * 弹窗打开后的回调（此时弹窗挂载成功)
    */
-  onOpen?: Function;
+  afterOpen?: Function;
   /**
-   * 弹窗卸载成功后的回调
+   * 弹窗关闭后的回调
    */
-  onClose?: Function;
+  afterClose?: Function;
   /**
    * 是否展示遮罩	
    */
@@ -60,6 +60,7 @@ export interface OverlayProps {
   canCloseByOutSideClick?: boolean;
   canCloseByEsc?: boolean;
   wrapperClassName?: string;
+  wrapperStyle?: CSSProperties;
   maskClassName?: string;
   maskStyle?: CSSProperties;
 
@@ -73,7 +74,7 @@ export interface OverlayProps {
   onMouseLeave?: () => void;
   beforePosition?: Function;
   onPosition?: Function;
-  needAdjust?: boolean;
+  autoAdjust?: boolean;
   autoHideScrollOverflow?: boolean;
   /**
    * 是否自动聚焦弹窗
@@ -117,8 +118,8 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     fixed,
     visible,
     onRequestClose = () => { },
-    onOpen,
-    onClose,
+    afterOpen,
+    afterClose,
     container = body,
     style = {},
     placement,
@@ -131,7 +132,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     beforePosition,
     onPosition,
     cache = false,
-    needAdjust,
+    autoAdjust,
     autoFocus = false,
     ...others
   } = props;
@@ -172,7 +173,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
       placement,
       placementOffset,
       beforePosition,
-      needAdjust
+      autoAdjust
     });
 
     positionStyleRef.current = placements.style;
@@ -188,7 +189,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     callRef((child as any).ref, node);
 
     if (node !== null) {
-      !cache && typeof onOpen === 'function' && onOpen(node);
+      !cache && typeof afterOpen === 'function' && afterOpen(node);
 
       const containerNode = getContainer(container());
       containerRef.current = containerNode;
@@ -210,7 +211,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
 
       forceUpdate({});
     } else {
-      !cache && typeof onClose === 'function' && onClose(node);
+      !cache && typeof afterClose === 'function' && afterClose(node);
     }
   }, []);
 
@@ -249,7 +250,8 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
 
   // 这里用 mousedown 而不是用 click。
   // click 是 mouseup 才触发。 eg: mousedown 在弹窗内部，然后按住不放到弹窗外 mouseup 结果弹窗关了。 https://github.com/alibaba-fusion/next/issues/742
-  useListener(document.body, 'mousedown', clickEvent as any, false, !!(visible && overlayRef.current));
+  const clickCondition = visible && overlayRef.current && (canCloseByOutSideClick || (hasMask && canCloseByMask))
+  useListener(document.body, 'mousedown', clickEvent as any, false, clickCondition);
 
   const keydownEvent = (e: OverlayEvent) => {
     if (!visible) {
@@ -282,7 +284,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
       if (hasScroll(document.body)) {
         const scrollWidth = getScrollbarWidth();
         if (scrollWidth) {
-          setStyle(document.body, 'width', `calc(100% - ${scrollWidth}px)`);
+          setStyle(document.body, 'padding-right', `calc(${getStyle(document.body, 'padding-right')} + ${scrollWidth}px)`);
         }
       }
 
@@ -299,15 +301,15 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     !firstVisible && visible && setFirst(true);
   }, [visible]);
 
-  // cache 情况下的模拟 onOpen/onClose
+  // cache 情况下的模拟 afterOpen/afterClose
   const overlayNode = overlayRef.current; // overlayRef.current 可能会异步变化，所以要先接下
   useEffect(() => {
     if (cache && overlayNode) {
       if (visible) {
-        typeof onOpen === 'function' && onOpen(overlayNode);
         updatePosition();
+        typeof afterOpen === 'function' && afterOpen(overlayNode);
       } else {
-        typeof onClose === 'function' && onClose();
+        typeof afterClose === 'function' && afterClose();
       }
     }
   }, [visible, cache && overlayNode]);

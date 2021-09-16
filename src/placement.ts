@@ -41,7 +41,7 @@ export interface PlacementsConfig {
   points?: pointsType;
   offset?: number[];
   beforePosition?: Function;
-  needAdjust?: boolean;
+  autoAdjust?: boolean;
 }
 
 export interface placementMapType {
@@ -97,7 +97,7 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
     offset = [0, 0],
     position = 'absolute',
     beforePosition,
-    needAdjust = true,
+    autoAdjust = true,
     autoHideScrollOverflow = true
   } = config;
 
@@ -272,7 +272,7 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
 
   // step2: 根据 viewport（挂载容器不一定是可视区）重新计算位置. 根据可视区域优化位置
   // 位置动态优化思路见 https://github.com/alibaba-fusion/overlay/issues/2
-  if (needAdjust && placement && shouldResizePlacement(left, top, viewport)) {
+  if (autoAdjust && placement && shouldResizePlacement(left, top, viewport)) {
     const nplacement = getNewPlacement(left, top, placement);
     // step2: 空间不够，替换位置重新计算位置
     if (placement !== nplacement) {
