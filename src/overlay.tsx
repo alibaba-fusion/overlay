@@ -3,7 +3,7 @@ import { CSSProperties, ReactElement } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import { createPortal } from 'react-dom';
 import getPlacements, { pointsType, placementType, PositionResult } from './placement';
-import { useListener, getHTMLElement, getStyle, setStyle, getContainer, throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList, isHTMLElement } from './utils';
+import { useListener, getHTMLElement, getStyle, setStyle, getMountContainer, throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList, isHTMLElement } from './utils';
 
 export interface OverlayEvent extends MouseEvent, KeyboardEvent {
   target: EventTarget | null;
@@ -49,14 +49,11 @@ export interface OverlayProps {
    * 弹窗关闭后的回调
    */
   afterClose?: Function;
-  /**
-   * 是否展示遮罩	
-   */
-  hasMask?: boolean;
-  /**
-   * 点击遮罩区域是否关闭弹层，显示遮罩时生效	
-   */
-  canCloseByMask?: boolean;
+
+  hasMask?: boolean; // 仅仅为了兼容
+  canCloseByMask?: boolean; // 仅仅为了兼容
+  disableScroll?: boolean; // 仅仅为了兼容
+
   canCloseByOutSideClick?: boolean;
   canCloseByEsc?: boolean;
   wrapperClassName?: string;
@@ -108,7 +105,7 @@ const hasScroll = (containerNode: HTMLElement) => {
 const Overlay = React.forwardRef((props: OverlayProps, ref) => {
   const body = () => document.body;
   const {
-    target = body,
+    target,
     children,
     wrapperClassName,
     maskClassName,
@@ -120,12 +117,13 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     onRequestClose = () => { },
     afterOpen,
     afterClose,
-    container = body,
+    container: popupContainer = body,
     style = {},
     placement,
     placementOffset,
     hasMask,
     canCloseByMask,
+    disableScroll = true,
     canCloseByOutSideClick = true,
     canCloseByEsc = true,
     safeNode,
@@ -144,7 +142,9 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
   const [firstVisible, setFirst] = useState(visible);
   const [, forceUpdate] = useState(null);
   const positionStyleRef = useRef<CSSProperties>({ position });
-
+  const getContainer = typeof popupContainer === 'string' ? () => document.getElementById(popupContainer) :
+    typeof popupContainer !== 'function' ? () => popupContainer : popupContainer;
+  const [container, setContainer] = useState(null);
   const targetRef = useRef(null);
   const overlayRef = useRef(null);
   const containerRef = useRef(null);
@@ -192,10 +192,12 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     callRef((child as any).ref, node);
 
     if (node !== null) {
-      const containerNode = getContainer(getHTMLElement(container()));
+      const containerNode = getMountContainer(getHTMLElement(container));
       containerRef.current = containerNode;
 
-      const targetNode = getHTMLElement((typeof target === 'string' ? () => document.getElementById(target) : target)());
+      let taretElement = target ? (typeof target === 'string' ? () => document.getElementById(target) : target)() :
+        (hasMask ? maskRef.current : body());
+      const targetNode = getHTMLElement(taretElement);
       targetRef.current = targetNode;
 
       overflowRef.current = getOverflowNodes(targetNode, containerNode);
@@ -216,14 +218,12 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     } else {
       !cache && typeof afterClose === 'function' && afterClose(node);
     }
-  }, []);
+  }, [container]);
 
   const clickEvent = (e: OverlayEvent) => {
     if (!visible) {
       return;
     }
-
-    // console.log('click', e)
 
     // 点击遮罩关闭
     if (hasMask && canCloseByMask && maskRef && maskRef.current === e.target) {
@@ -261,7 +261,6 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     if (!visible) {
       return;
     }
-    // console.log('keydown', e)
 
     if (e.keyCode === 27 && canCloseByEsc) {
       onRequestClose(e);
@@ -273,7 +272,6 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     if (!visible) {
       return;
     }
-    // console.log('scroll', e)
     updatePosition();
   }
 
@@ -283,7 +281,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
   useEffect(() => {
     if (visible && hasMask) {
       const originStyle = document.body.getAttribute('style');
-      setStyle(document.body, 'overflow', 'hidden');
+      disableScroll && setStyle(document.body, 'overflow', 'hidden');
 
       if (hasScroll(document.body)) {
         const scrollWidth = getScrollbarWidth();
@@ -326,7 +324,14 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     }
   }, [!visible && autoFocus && lastFocus.current]);
 
-  if (firstVisible === false) {
+  // container 异步加载情况
+  useEffect(() => {
+    if (!container && visible) {
+      setContainer(getContainer());
+    }
+  }, [container, visible]);
+
+  if (firstVisible === false || !container) {
     return null;
   }
 
@@ -352,7 +357,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
 
   return createPortal(
     content,
-    container()
+    container
   );
 });
 

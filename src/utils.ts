@@ -81,7 +81,7 @@ export function saveRef(ref: any) {
  * @param container 
  * @returns 
  */
-export const getContainer = (container: HTMLElement) => {
+export const getMountContainer = (container: HTMLElement) => {
     if (typeof document === undefined) {
         return container;
     }
@@ -331,7 +331,7 @@ function isHTMLElement(obj: any) {
 }
 
 export function getHTMLElement(node: any) {
-    if (!isHTMLElement(node)) {
+    if (node && !isHTMLElement(node)) {
         return findDOMNode(node);
     }
     return node;

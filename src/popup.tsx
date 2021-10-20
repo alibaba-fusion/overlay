@@ -143,7 +143,6 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
 
   const handleMouseEnter = (targetType: string) => {
     return (e: OverlayEvent) => {
-      console.log(/enter/)
       if (mouseLeaveTimer.current && visible) {
         clearTimeout(mouseLeaveTimer.current);
         mouseLeaveTimer.current = null;
