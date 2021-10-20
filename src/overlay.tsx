@@ -186,12 +186,11 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
 
   // 弹窗挂载
   const overlayRefCallback = useCallback((node) => {
-    // overlayRef = child.ref
     overlayRef.current = node;
     callRef(ref, node);
     callRef((child as any).ref, node);
 
-    if (node !== null) {
+    if (node !== null && container) {
       const containerNode = getMountContainer(getHTMLElement(container));
       containerRef.current = containerNode;
 
@@ -252,8 +251,8 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     }
   }
 
-  // 这里用 mousedown 而不是用 click。
-  // click 是 mouseup 才触发。 eg: mousedown 在弹窗内部，然后按住不放到弹窗外 mouseup 结果弹窗关了。 https://github.com/alibaba-fusion/next/issues/742
+  // 这里用 mousedown 而不是用 click。因为 click 是 mouseup 才触发。
+  // 如果用 click 带来的问题: mousedown 在弹窗内部，然后按住鼠标不放拖动到弹窗外触发 mouseup 结果弹窗关了，这是不期望的展示。 https://github.com/alibaba-fusion/next/issues/742
   const clickCondition = visible && overlayRef.current && (canCloseByOutSideClick || (hasMask && canCloseByMask))
   useListener(document.body, 'mousedown', clickEvent as any, false, clickCondition);
 
@@ -329,7 +328,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     if (!container && visible) {
       setContainer(getContainer());
     }
-  }, [container, visible]);
+  }, [visible]);
 
   if (firstVisible === false || !container) {
     return null;
