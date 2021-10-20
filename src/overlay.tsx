@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useCallback, useRef, useLayoutEffect } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { CSSProperties, ReactElement } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
-import ReactDOM from 'react-dom';
-import getPlacements, { pointsType, placementType } from './placement';
-import { useListener, getStyle, setStyle, getContainer, throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList } from './utils';
+import { createPortal } from 'react-dom';
+import getPlacements, { pointsType, placementType, PositionResult } from './placement';
+import { useListener, getHTMLElement, getStyle, setStyle, getContainer, throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList, isHTMLElement } from './utils';
 
 export interface OverlayEvent extends MouseEvent, KeyboardEvent {
   target: EventTarget | null;
@@ -72,7 +72,7 @@ export interface OverlayProps {
   safeNode?: () => Element | Array<() => Element>;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
-  beforePosition?: Function;
+  beforePosition?: (result: PositionResult) => PositionResult;
   onPosition?: Function;
   autoAdjust?: boolean;
   autoHideScrollOverflow?: boolean;
@@ -129,6 +129,9 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     canCloseByOutSideClick = true,
     canCloseByEsc = true,
     safeNode,
+    /**
+     * 弹窗
+     */
     beforePosition,
     onPosition,
     cache = false,
@@ -189,16 +192,15 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     callRef((child as any).ref, node);
 
     if (node !== null) {
-      !cache && typeof afterOpen === 'function' && afterOpen(node);
-
-      const containerNode = getContainer(container());
+      const containerNode = getContainer(getHTMLElement(container()));
       containerRef.current = containerNode;
-      const targetNode = (typeof target === 'string' ? () => document.getElementById(target) : target)();
+
+      const targetNode = getHTMLElement((typeof target === 'string' ? () => document.getElementById(target) : target)());
       targetRef.current = targetNode;
 
       overflowRef.current = getOverflowNodes(targetNode, containerNode);
 
-      if(autoFocus) {
+      if (autoFocus) {
         const focusableNodes = getFocusNodeList(node);
         if (focusableNodes.length > 0 && focusableNodes[0]) {
           lastFocus.current = document.activeElement;
@@ -210,6 +212,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
       ro.observe(containerNode);
 
       forceUpdate({});
+      !cache && typeof afterOpen === 'function' && afterOpen(node);
     } else {
       !cache && typeof afterClose === 'function' && afterClose(node);
     }
@@ -237,7 +240,8 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
 
     // 安全节点不关闭
     for (let i = 0; i < safeNodeList.length; i++) {
-      const node = typeof safeNodeList[i] === 'function' ? safeNodeList[i]() : null;
+      let node = getHTMLElement(typeof safeNodeList[i] === 'function' ? safeNodeList[i]() : null);
+
       if (node && (node === e.target || node.contains(e.target as Node))) {
         return;
       }
@@ -346,7 +350,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     {newChildren}
   </div>);
 
-  return ReactDOM.createPortal(
+  return createPortal(
     content,
     container()
   );

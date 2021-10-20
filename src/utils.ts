@@ -1,4 +1,5 @@
-import { useEffect, useCallback } from 'react'
+import { useEffect } from 'react'
+import { findDOMNode } from 'react-dom';
 
 export function useListener(nodeList: HTMLElement | Array<HTMLElement>, eventName: string, callback: EventListenerOrEventListenerObject, useCapture: boolean, condition: boolean) {
     useEffect(() => {
@@ -320,4 +321,18 @@ export function getFocusNodeList(node: HTMLElement) {
     }
 
     return res;
+}
+
+function isHTMLElement(obj: any) {
+    if (obj.nodeType) {
+        return obj.nodeType === 1;
+    }
+    return false;
+}
+
+export function getHTMLElement(node: any) {
+    if (!isHTMLElement(node)) {
+        return findDOMNode(node);
+    }
+    return node;
 }

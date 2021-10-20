@@ -5,6 +5,14 @@ type point = 'tl' | 'tc' | 'tr' | 'cl' | 'cc' | 'cr' | 'bl' | 'bc' | 'br';
 export type pointsType = [point, point];
 export type placementType = 'topLeft' | 'top' | 'topRight' | 'rightTop' | 'right' | 'rightBottom' | 'bottomLeft' | 'bottom' | 'bottomRight' | 'leftTop' | 'left' | 'leftBottom';
 
+export interface PositionResult {
+  config: {
+    placement: placementType;
+    points: pointsType;
+  },
+  style: CSSProperties;
+}
+
 export interface PlacementsConfig {
   position: 'absolute' | 'fixed';
   /**
@@ -40,7 +48,10 @@ export interface PlacementsConfig {
    */
   points?: pointsType;
   offset?: number[];
-  beforePosition?: Function;
+  /**
+   * 弹窗位置重新计算的回调，可以通过修改范围值自己订正弹窗位置
+   */
+  beforePosition?: (result: PositionResult) => PositionResult;
   autoAdjust?: boolean;
 }
 
@@ -303,12 +314,12 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
     }
   }
 
-  const result = {
+  const result = <PositionResult> {
     config: {
       placement,
       points,
     },
-    style: <CSSProperties>{
+    style: {
       position,
       left: Math.round(left),
       top: Math.round(top),
