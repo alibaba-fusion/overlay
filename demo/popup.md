@@ -31,7 +31,7 @@ ReactDOM.render(
         </Popup>
         <br />
         <br />
-        <Popup overlay={overlay} triggerType="click" triggerClickKeycode={40}>
+        <Popup overlay={overlay} triggerType="click" triggerClickKeyCode={40}>
             <input placeholder="Use Down Arrow to open" />
         </Popup>
     </div>,

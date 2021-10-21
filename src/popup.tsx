@@ -16,7 +16,7 @@ export interface PopupProps {
   overlay: ReactElement;
 
   triggerType?: TriggerTypes | TriggerType;
-  triggerClickKeycode?: number | Array<number>;
+  triggerClickKeyCode?: number | Array<number>;
   container?: (ele: Element) => Element;
 
   placement?: placementType;
@@ -73,7 +73,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
   const {
     overlay,
     triggerType = 'click',
-    triggerClickKeycode,
+    triggerClickKeyCode,
     children,
     defaultVisible,
     className,
@@ -91,7 +91,6 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     overlayProps = {},
     safeNode,
     followTrigger = false,
-    canCloseByEsc = false,
     ...others
   } = props;
 
@@ -100,6 +99,8 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
   const overlayRef: any = useRef(null);
   const mouseLeaveTimer: any = useRef(null);
   const mouseEnterTimer: any = useRef(null);
+  const overlayClick = useRef(false);
+
   const safeNodes = Array.isArray(safeNode) ? safeNode : (typeof safeNode === 'function' ? [safeNode] : []);
 
   const child: ReactElement | undefined = React.Children.only(children);
@@ -134,16 +135,16 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
   }
 
   const handleKeyDown = (e: OverlayEvent) => {
-    const keycodes = Array.isArray(triggerClickKeycode) ? triggerClickKeycode : [triggerClickKeycode];
+    const keycodes = Array.isArray(triggerClickKeyCode) ? triggerClickKeyCode : [triggerClickKeyCode];
     if (keycodes.includes(e.keyCode)) {
-      e.preventDefault();
       e.targetType = 'trigger';
-      handleVisibleChange(true, e);
+      handleVisibleChange(!visible, e);
     }
   }
 
   const handleMouseEnter = (targetType: string) => {
     return (e: OverlayEvent) => {
+      console.log(/enter/)
       if (mouseLeaveTimer.current && visible) {
         clearTimeout(mouseLeaveTimer.current);
         mouseLeaveTimer.current = null;
@@ -162,6 +163,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
 
   const handleMouseLeave = (targetType: string) => {
     return (e: OverlayEvent) => {
+      console.log(/out/)
       if (!mouseLeaveTimer.current && visible) {
         mouseLeaveTimer.current = setTimeout(() => {
           e.targetType = targetType;
@@ -182,8 +184,17 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     handleVisibleChange(true, e);
   }
   const handleBlur = (e: OverlayEvent) => {
+    if (overlayClick.current) {
+      overlayClick.current = false;
+      return;
+    }
     e.targetType = 'trigger';
     handleVisibleChange(false, e);
+  }
+
+  // 点击弹窗的时候不能被 onBlur 关闭
+  const handleOverlayClick = (e: OverlayEvent) => {
+    overlayClick.current = true;
   }
 
   const triggerProps: any = {
@@ -207,6 +218,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
       case 'focus':
         triggerProps.onFocus = makeChain(handleFocus, onFocus);
         triggerProps.onBlur = makeChain(handleBlur, onBlur);
+        overlayOtherProps.onMouseDown = makeChain(handleOverlayClick, overlayProps.onMouseDown);
         break;
     }
   });
@@ -225,7 +237,6 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     <Overlay
       {...others}
       {...overlayOtherProps}
-      canCloseByEsc={canCloseByEsc}
       placement={placement}
       container={followTrigger ? () => triggerRef.current && triggerRef.current.parentNode : () => container(triggerRef.current)}
       safeNode={safeNodes}

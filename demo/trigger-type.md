@@ -23,10 +23,14 @@ const overlay = (triggerType) => <span style={style} className="overlay">
     {triggerType} to open!
 </span>;
 
+const handleVisibleChange = (visible) => {
+    console.log(visible)
+}
+
 ReactDOM.render(
     <div>
         <Popup overlay={overlay('click')} triggerType="click">
-            <button >click</button>
+            <button>click</button>
         </Popup>
         <Popup overlay={overlay('hover')} triggerType="hover">
             <button style={{marginLeft: 16}}>hover</button>
