@@ -59,10 +59,10 @@ export interface PopupProps {
   /**
    * 气泡被遮挡时自动调整位置
    */
-   autoAdjust?: boolean;
-   /**
-   * 滚动超出的时候隐藏
-   */
+  autoAdjust?: boolean;
+  /**
+  * 滚动超出的时候隐藏
+  */
   autoHideScrollOverflow?: boolean;
   followTrigger?: boolean;
   canCloseByEsc?: boolean;
@@ -232,13 +232,17 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     handleVisibleChange(false, e);
   }
 
+  const getContainer = typeof container === 'string' ? () => document.getElementById(container) :
+    typeof container !== 'function' ? () => container : () => container(triggerRef.current);
+
+
   return <>
     {child && React.cloneElement(child, triggerProps)}
     <Overlay
       {...others}
       {...overlayOtherProps}
       placement={placement}
-      container={followTrigger ? () => triggerRef.current && triggerRef.current.parentNode : () => container(triggerRef.current)}
+      container={followTrigger ? () => triggerRef.current && triggerRef.current.parentNode : getContainer}
       safeNode={safeNodes}
       visible={visible}
       target={() => triggerRef.current}

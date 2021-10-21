@@ -123,7 +123,7 @@ export const getOverflowNodes = (targetNode: HTMLElement, container: HTMLElement
         }
 
         const overflow = getStyle(calcContainer, 'overflow');
-        if (overflow.match(/auto|scroll/)) {
+        if (overflow && overflow.match(/auto|scroll/)) {
             const { clientWidth, clientHeight, scrollWidth, scrollHeight } = calcContainer;
             if (clientHeight !== scrollHeight || clientWidth !== scrollWidth) {
                 // console.log('overflow node is: ', calcContainer )
@@ -157,6 +157,10 @@ export function getViewPort(container: HTMLElement) {
 }
 
 export function getStyle(elt: Element, name: string) {
+    if (!elt || elt.nodeType !== 1) {
+        return null;
+    }
+
     const style = window.getComputedStyle(elt, null)
 
     return style.getPropertyValue(name);
