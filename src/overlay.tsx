@@ -185,7 +185,8 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
   }
 
   // 弹窗挂载
-  const overlayRefCallback = useCallback((node) => {
+  const overlayRefCallback = useCallback((nodeRef) => {
+    const node = getHTMLElement(nodeRef);
     overlayRef.current = node;
     callRef(ref, node);
     callRef((child as any).ref, node);
@@ -194,7 +195,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
       const containerNode = getMountContainer(getHTMLElement(container));
       containerRef.current = containerNode;
 
-      let taretElement = target ? (typeof target === 'string' ? () => document.getElementById(target) : target)() :
+      let taretElement = target && target !== 'viewport' ? (typeof target === 'string' ? () => document.getElementById(target) : target)() :
         (hasMask ? maskRef.current : body());
       const targetNode = getHTMLElement(taretElement);
       targetRef.current = targetNode;

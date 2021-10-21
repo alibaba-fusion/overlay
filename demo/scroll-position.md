@@ -11,7 +11,7 @@ import Overlay from '@alifd/overlay';
 
 const { Popup } = Overlay;
 const style = {
-    width: 300,
+    width: 400,
     height: 100,
     padding: 10,
     background: '#fff',
@@ -31,7 +31,7 @@ const App  = () => {
         overflow: 'auto',
     }}>
         <Popup 
-            overlay={<div style={style}>transform: {position.transform}</div>}
+            overlay={<div style={style}>transform: {JSON.stringify(position)}</div>}
             placement="bottomLeft"
             onPosition={({style}) => {
                 setPosition(style);
@@ -41,7 +41,7 @@ const App  = () => {
         </Popup>
         <br/>
         <Popup 
-            overlay={<div style={style}>transform: {position2.transform}</div>}
+            overlay={<div style={style}>transform: {JSON.stringify(position2)}</div>}
             placement="bottomLeft"
             onPosition={({style}) => {
                 setPosition2(style);

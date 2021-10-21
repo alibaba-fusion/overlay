@@ -331,15 +331,17 @@ export default function getPlacements(config: PlacementsConfig): placementStyleT
    * 触发条件: target 和 document.body 之间存在 overflow 滚动元素， target 进入不可见区域
    */
   if (autoHideScrollOverflow && placement && scrollNode.length) {
-    // 滚动改成 transform 提高性能
-    result.style.transform = `translate3d(${result.style.left}px, ${result.style.top}px, 0px)`;
-    result.style.left = 0;
-    result.style.top = 0;
+    // 滚动改成 transform 提高性能, 但是有动效问题
+    // result.style.transform = `translate3d(${result.style.left}px, ${result.style.top}px, 0px)`;
+    // result.style.left = 0;
+    // result.style.top = 0;
 
     scrollNode.forEach(node => {
       const { top, left, width, height } = node.getBoundingClientRect();
       if (ttop + theight < top || ttop > top + height || tleft + twidth < left || tleft > left + width) {
         result.style.display = 'none';
+      } else {
+        result.style.display = ''; // 这里一定要显式的删除，带上动效后会删不掉
       }
     });
   }
