@@ -12,7 +12,7 @@ import Overlay from '@alifd/overlay';
 const { Popup } = Overlay;
 
 const style = {
-    width: 300,
+    width: 400,
     height: 100,
     padding: 10,
     background: '#fff',

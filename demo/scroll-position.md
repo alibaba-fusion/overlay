@@ -11,7 +11,7 @@ import Overlay from '@alifd/overlay';
 
 const { Popup } = Overlay;
 const style = {
-    width: 400,
+    width: 500,
     height: 100,
     padding: 10,
     background: '#fff',
@@ -23,7 +23,7 @@ const App  = () => {
     const [position, setPosition] = useState({});
     const [position2, setPosition2] = useState({});
 
-    return <div id="a" style={{
+    return <div style={{
         position: 'relative',
         height: 150,
         padding: 50,

@@ -122,7 +122,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     placement,
     placementOffset,
     hasMask,
-    canCloseByMask,
+    canCloseByMask = true,
     disableScroll = true,
     canCloseByOutSideClick = true,
     canCloseByEsc = true,
@@ -151,6 +151,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
   const maskRef = useRef(null);
   const overflowRef = useRef<Array<HTMLElement>>([]);
   const lastFocus = useRef(null);
+  const ro = useRef(null);
 
   const child: ReactElement | undefined = React.Children.only(children);
   if (typeof (child as any).ref === 'string') {
@@ -210,13 +211,17 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
         }
       }
 
-      const ro = new ResizeObserver(throttle(updatePosition.bind(this), 100));
-      ro.observe(containerNode);
+      ro.current = new ResizeObserver(throttle(updatePosition.bind(this), 100));
+      ro.current.observe(containerNode);
 
       forceUpdate({});
       !cache && typeof afterOpen === 'function' && afterOpen(node);
     } else {
       !cache && typeof afterClose === 'function' && afterClose(node);
+      if (ro.current) {
+        ro.current.disconnect();
+        ro.current = null;
+      }
     }
   }, [container]);
 
@@ -226,8 +231,10 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     }
 
     // 点击遮罩关闭
-    if (hasMask && canCloseByMask && maskRef && maskRef.current === e.target) {
-      onRequestClose(e);
+    if (hasMask && maskRef.current === e.target) {
+      if (canCloseByMask) {
+        onRequestClose(e);
+      }
       return;
     }
 
@@ -254,8 +261,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
 
   // 这里用 mousedown 而不是用 click。因为 click 是 mouseup 才触发。
   // 如果用 click 带来的问题: mousedown 在弹窗内部，然后按住鼠标不放拖动到弹窗外触发 mouseup 结果弹窗关了，这是不期望的展示。 https://github.com/alibaba-fusion/next/issues/742
-  const clickCondition = visible && overlayRef.current && (canCloseByOutSideClick || (hasMask && canCloseByMask))
-  useListener(document.body, 'mousedown', clickEvent as any, false, clickCondition);
+  useListener(document.body, 'mousedown', clickEvent, false, !!(visible && overlayRef.current && (canCloseByOutSideClick || (hasMask && canCloseByMask))));
 
   const keydownEvent = (e: OverlayEvent) => {
     if (!visible) {
@@ -266,7 +272,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
       onRequestClose(e);
     }
   }
-  useListener(document.body, 'keydown', keydownEvent as any, false, !!(visible && overlayRef.current && canCloseByEsc));
+  useListener(document.body, 'keydown', keydownEvent, false, !!(visible && overlayRef.current && canCloseByEsc));
 
   const scrollEvent = (e: OverlayEvent) => {
     if (!visible) {
@@ -324,12 +330,17 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     }
   }, [!visible && autoFocus && lastFocus.current]);
 
-  // container 异步加载情况
+  // container 异步加载, 因为 container 很可能还没渲染完成，所以 visible 后这里异步设置下
   useEffect(() => {
-    if (!container && visible) {
-      setContainer(getContainer());
+    if(visible) {
+      // 首次更新
+      if (!container) {
+        setContainer(getContainer());
+      } else if (getContainer() !== container) {
+        setContainer(getContainer());
+      }
     }
-  }, [visible]);
+  }, [visible, popupContainer]);
 
   if (firstVisible === false || !container) {
     return null;

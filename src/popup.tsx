@@ -91,6 +91,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     overlayProps = {},
     safeNode,
     followTrigger = false,
+    canCloseByEsc = false,
     ...others
   } = props;
 
@@ -215,18 +216,22 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     ref: useCallback(makeChain(saveRef(overlayRef), saveRef(ref), saveRef((overlayChild as any).ref)), [])
   });
 
+  const handleRequestClose = (e: OverlayEvent) => {
+    handleVisibleChange(false, e);
+  }
+
   return <>
     {child && React.cloneElement(child, triggerProps)}
     <Overlay
-      canCloseByEsc={false}
       {...others}
       {...overlayOtherProps}
+      canCloseByEsc={canCloseByEsc}
       placement={placement}
       container={followTrigger ? () => triggerRef.current && triggerRef.current.parentNode : () => container(triggerRef.current)}
       safeNode={safeNodes}
       visible={visible}
       target={() => triggerRef.current}
-      onRequestClose={(e) => handleVisibleChange(false, e)}
+      onRequestClose={handleRequestClose}
     >
       {newOverlay}
     </Overlay>

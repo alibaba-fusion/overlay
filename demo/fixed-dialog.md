@@ -9,6 +9,16 @@ fixed 模式的dialog，带有遮罩的弹层。
 import { useState, useRef } from 'react';
 import Overlay from '@alifd/overlay';
 
+const maskStyle = {
+    position: 'fixed',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    height: '100%',
+    backgroundColor: '#00000073'
+};
+
 const Demo = () => {
     const [visible, setVisible] = useState(false);
     const [visible2, setVisible2] = useState(false);
@@ -34,15 +44,7 @@ const Demo = () => {
             <Overlay 
                 visible={visible}
                 maskClassName='next-overlay-mask'
-                maskStyle={{
-                    position: 'fixed',
-                    top: 0,
-                    right: 0,
-                    bottom: 0,
-                    left: 0,
-                    height: '100%',
-                    backgroundColor: '#00000073'
-                }}
+                maskStyle={maskStyle}
                 hasMask
                 canCloseByMask
                 fixed
@@ -91,18 +93,11 @@ const Demo = () => {
             <Overlay 
                 visible={visible2}
                 maskClassName='next-overlay-mask'
-                maskStyle={{
-                    position: 'fixed',
-                    top: 0,
-                    right: 0,
-                    bottom: 0,
-                    left: 0,
-                    height: '100%',
-                    backgroundColor: '#00000073'
-                }}
+                maskStyle={maskStyle}
                 hasMask
                 canCloseByMask
                 fixed
+                autoFocus
                 offset={[0, 100]}
                 onRequestClose={onClose2}
             >
@@ -125,7 +120,8 @@ const Demo = () => {
                             boxShadow: '0 3px 6px -4px #0000001f, 0 6px 16px #00000014, 0 9px 28px 8px #0000000d',
                         }}
                     >
-                        with long content
+                        <p>with long content</p>
+                        <input />
                         <div style={{padding: '1400px 8px 8px 8px'}}>
                             <button onClick={onClose}>ok</button>
                             <button onClick={onClose} style={{marginLeft: 8}}>cancel</button>
