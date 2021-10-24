@@ -3,7 +3,7 @@ import { getViewTopLeft, getViewPort } from './utils';
 
 type point = 'tl' | 'tc' | 'tr' | 'cl' | 'cc' | 'cr' | 'bl' | 'bc' | 'br';
 export type pointsType = [point, point];
-export type alignType = 'tl' | 't' | 'tr' | 'rt' | 'r' | 'rb' | 'bl' | 'b' | 'br' | 'lt' | 'l' | 'lb';
+export type placementType = 'tl' | 't' | 'tr' | 'rt' | 'r' | 'rb' | 'bl' | 'b' | 'br' | 'lt' | 'l' | 'lb';
 
 export interface PlacementsConfig {
   position: 'absolute' | 'fixed';
@@ -30,11 +30,11 @@ export interface PlacementsConfig {
   /**
    * 弹窗 overlay 相对于目标元素 target 的位置
    */
-  align?: alignType;
+  placement?: placementType;
   /**
-   * 偏离 align 对其方向像素
+   * 偏离 placement 对其方向像素
    */
-  alignOffset?: number;
+  placementOffset?: number;
   /**
    * 对齐点 [弹窗, 相对目标]
    */
@@ -47,7 +47,7 @@ export interface PlacementsConfig {
   autoAdjust?: boolean;
 }
 
-export interface alignMapType {
+export interface placementMapType {
   tl: pointsType;
   t: pointsType;
   tr: pointsType;
@@ -62,7 +62,7 @@ export interface alignMapType {
   rb: pointsType;
 }
 
-const alignMap: alignMapType = {
+const placementMap: placementMapType = {
   tl: ['bl', 'tl'],
   t: ['bc', 'tc'],
   tr: ['br', 'tr'],
@@ -79,7 +79,7 @@ const alignMap: alignMapType = {
 
 export interface PositionResult {
   config?: {
-    align: alignType;
+    placement: placementType;
     points: pointsType;
   },
   style: CSSProperties;
@@ -96,8 +96,8 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
     overlay,
     container,
     scrollNode,
-    align: oalign,
-    alignOffset = 0,
+    placement: oplacement,
+    placementOffset = 0,
     points: opoints = ['tl', 'bl'],
     offset = [0, 0],
     position = 'absolute',
@@ -116,7 +116,7 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
     }
   }
 
-  let align = oalign;
+  let placement = oplacement;
 
   /**
    * 可视窗口是浏览器给用户展示的窗口
@@ -134,27 +134,27 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
   const { scrollWidth: cwidth, scrollHeight: cheight, scrollTop: cscrollTop, scrollLeft: cscrollLeft } = container;
   const { width: owidth, height: oheight } = overlay.getBoundingClientRect();
 
-  function getXY(p: alignType | undefined) {
+  function getXY(p: placementType | undefined) {
     let basex = tleft - cleft + cscrollLeft;
     let basey = ttop - ctop + cscrollTop;
 
     let points = opoints;
-    if (p && p in alignMap) {
-      points = alignMap[p];
+    if (p && p in placementMap) {
+      points = placementMap[p];
 
-      if (alignOffset && p.length === 2) {
+      if (placementOffset && p.length === 2) {
         switch (p[0]) {
           case 't':
-            basey -= alignOffset;
+            basey -= placementOffset;
             break;
           case 'b':
-            basey += alignOffset;
+            basey += placementOffset;
             break;
           case 'l':
-            basex -= alignOffset;
+            basex -= placementOffset;
             break;
           case 'r':
-            basex += alignOffset;
+            basex += placementOffset;
             break;
         }
       }
@@ -203,10 +203,10 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
     }
   }
 
-  // step1: 根据 align 计算位置
-  let { left, top, points } = getXY(align);
+  // step1: 根据 placement 计算位置
+  let { left, top, points } = getXY(placement);
 
-  function shouldResizeAlign(l: number, t: number, viewport: HTMLElement) {
+  function shouldResizePlacement(l: number, t: number, viewport: HTMLElement) {
     if (viewport !== container) {
       // 说明 container 不具备滚动属性
       const { left: vleft, top: vtop } = getViewTopLeft(viewport);
@@ -221,31 +221,31 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
     return t < 0 || l < 0 || t + oheight > cheight || l + owidth > cwidth;
   }
 
-  function getNewAlign(l: number, t: number, p: alignType) {
+  function getNewPlacement(l: number, t: number, p: placementType) {
     if (p.length !== 2) {
       return p;
     }
     
-    let np: alignType = p;
+    let np: placementType = p;
     // 区域不够
     if (t < 0) {
       // [上边 => 下边, 底部对齐 => 顶部对齐]
-      np = [np[0].replace('t', 'b'), np[1].replace('b', 't')] as unknown as alignType;
+      np = [np[0].replace('t', 'b'), np[1].replace('b', 't')] as unknown as placementType;
     }
     // 区域不够
     if (l < 0) {
       // [左边 => 右边, 右对齐 => 左对齐]
-      np = [np[0].replace('l', 'r'), np[1].replace('r', 'l')] as unknown as alignType;
+      np = [np[0].replace('l', 'r'), np[1].replace('r', 'l')] as unknown as placementType;
     }
     // 超出区域
     if (t + oheight > cheight) {
       // [下边 => 上边, 顶部对齐 => 底部对齐]
-      np = [np[0].replace('b', 't'), np[1].replace('t', 'b')] as unknown as alignType;
+      np = [np[0].replace('b', 't'), np[1].replace('t', 'b')] as unknown as placementType;
     }
     // 超出区域
     if (l + owidth > cwidth) {
       // [右边 => 左边, 左对齐 => 右对齐]
-      np = [np[0].replace('r', 'l'), np[1].replace('l', 'r')] as unknown as alignType;
+      np = [np[0].replace('r', 'l'), np[1].replace('l', 'r')] as unknown as placementType;
     }
 
     return np;
@@ -275,27 +275,27 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
 
   // step2: 根据 viewport（挂载容器不一定是可视区）重新计算位置. 根据可视区域优化位置
   // 位置动态优化思路见 https://github.com/alibaba-fusion/overlay/issues/2
-  if (autoAdjust && align && shouldResizeAlign(left, top, viewport)) {
-    const nalign = getNewAlign(left, top, align);
+  if (autoAdjust && placement && shouldResizePlacement(left, top, viewport)) {
+    const nplacement = getNewPlacement(left, top, placement);
     // step2: 空间不够，替换位置重新计算位置
-    if (align !== nalign) {
-      let { left: nleft, top: ntop } = getXY(nalign);
+    if (placement !== nplacement) {
+      let { left: nleft, top: ntop } = getXY(nplacement);
 
-      if (shouldResizeAlign(nleft, ntop, viewport)) {
-        const nnalign = getNewAlign(nleft, ntop, nalign);
+      if (shouldResizePlacement(nleft, ntop, viewport)) {
+        const nnplacement = getNewPlacement(nleft, ntop, nplacement);
         // step3: 空间依然不够，说明xy轴至少有一个方向是怎么更换位置都不够的。停止计算开始补偿逻辑
-        if (nalign !== nnalign) {
-          let { left: nnleft, top: nntop } = getXY(nnalign);
+        if (nplacement !== nnplacement) {
+          let { left: nnleft, top: nntop } = getXY(nnplacement);
 
           const { left: nnnleft, top: nnntop } = ajustLeftAndTop(nnleft, nntop);
 
-          align = nnalign;
+          placement = nnplacement;
           left = nnnleft;
           top = nnntop;
         }
 
       } else {
-        align = nalign;
+        placement = nplacement;
         left = nleft;
         top = ntop;
       }
@@ -308,7 +308,7 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
 
   const result = <PositionResult> {
     config: {
-      align,
+      placement,
       points,
     },
     style: {
@@ -322,7 +322,7 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
    * step3: 滚动隐藏弹窗逻辑
    * 触发条件: target 和 document.body 之间存在 overflow 滚动元素， target 进入不可见区域
    */
-  if (autoHideScrollOverflow && align && scrollNode.length) {
+  if (autoHideScrollOverflow && placement && scrollNode.length) {
     // 滚动改成 transform 提高性能, 但是有动效问题
     // result.style.transform = `translate3d(${result.style.left}px, ${result.style.top}px, 0px)`;
     // result.style.left = 0;

@@ -3,7 +3,7 @@ title: 对齐
 order: 6
 ---
 
-通过 `align` 可以自定义对齐方式。
+通过 `placement` 可以自定义对齐方式。
 
 ```jsx
 import Overlay from '@alifd/overlay';
