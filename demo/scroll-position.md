@@ -31,8 +31,8 @@ const App  = () => {
         overflow: 'auto',
     }}>
         <Popup 
-            overlay={<div style={style}>transform: {JSON.stringify(position)}</div>}
-            placement="bottomLeft"
+            overlay={<div style={style}>父容器有滚动条，弹窗top自动跟随变化来保持位置不变: {JSON.stringify(position)}</div>}
+            align="bl"
             onPosition={({style}) => {
                 setPosition(style);
             }}
@@ -41,8 +41,8 @@ const App  = () => {
         </Popup>
         <br/>
         <Popup 
-            overlay={<div style={style}>transform: {JSON.stringify(position2)}</div>}
-            placement="bottomLeft"
+            overlay={<div style={style}>父容器有滚动条，弹窗top自动跟随变化来保持位置不变: {JSON.stringify(position2)}</div>}
+            align="bl"
             onPosition={({style}) => {
                 setPosition2(style);
             }}

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { CSSProperties, ReactElement } from 'react';
 
 import Overlay, { OverlayEvent } from './overlay';
-import { placementType } from './placement';
+import { alignType } from './placement';
 import { makeChain, saveRef } from './utils';
 
 type TriggerType = 'click' | 'hover' | 'focus';
@@ -19,11 +19,11 @@ export interface PopupProps {
   triggerClickKeyCode?: number | Array<number>;
   container?: (ele: Element) => Element;
 
-  placement?: placementType;
+  align?: alignType;
   /**
-   * 偏离 placement 对其方向像素
+   * 偏离 align 对其方向像素
    */
-  placementOffset?: number;
+  alignOffset?: number;
   /**
    * 是否显示
    */
@@ -80,7 +80,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     onVisibleChange = () => { },
     container = body,
     style = {},
-    placement = "bottomLeft",
+    align = "bl",
     onClick,
     onKeyDown,
     onMouseEnter,
@@ -241,7 +241,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     <Overlay
       {...others}
       {...overlayOtherProps}
-      placement={placement}
+      align={align}
       container={followTrigger ? () => triggerRef.current && triggerRef.current.parentNode : getContainer}
       safeNode={safeNodes}
       visible={visible}

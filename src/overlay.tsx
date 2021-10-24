@@ -2,8 +2,8 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { CSSProperties, ReactElement } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import { createPortal } from 'react-dom';
-import getPlacements, { pointsType, placementType, PositionResult } from './placement';
-import { useListener, getHTMLElement, getStyle, setStyle, getMountContainer, throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList, isHTMLElement } from './utils';
+import getPlacements, { pointsType, alignType, PositionResult } from './placement';
+import { useListener, getHTMLElement, getStyle, setStyle, getMountContainer, throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList } from './utils';
 
 export interface OverlayEvent extends MouseEvent, KeyboardEvent {
   target: EventTarget | null;
@@ -18,11 +18,11 @@ export interface OverlayProps {
 
   container?: () => HTMLElement;
 
-  placement?: placementType;
+  align?: alignType;
   /**
    * 偏离 placement 对其方向像素
    */
-  placementOffset?: number;
+  alignOffset?: number;
   /**
    * 弹窗定位方式
    */
@@ -119,8 +119,8 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     afterClose,
     container: popupContainer = body,
     style = {},
-    placement,
-    placementOffset,
+    align,
+    alignOffset,
     hasMask,
     canCloseByMask = true,
     disableScroll = true,
@@ -174,8 +174,8 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
       scrollNode: overflowRef.current,
       points, offset,
       position,
-      placement,
-      placementOffset,
+      align,
+      alignOffset,
       beforePosition,
       autoAdjust
     });

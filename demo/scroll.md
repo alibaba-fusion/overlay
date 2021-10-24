@@ -30,8 +30,8 @@ const App  = () => {
         overflow: 'auto',
     }}>
         <Popup 
-            overlay={<div style={style}>transform: {JSON.stringify(position)}</div>}
-            placement="bottomLeft"
+            overlay={<div style={style}>把节点挂载在父容器下可以避免top一直计算，提高性能: {JSON.stringify(position)}</div>}
+            align="bl"
             triggerType="click"
             container={ target => target.parentNode}
             onPosition={({style}) => {
