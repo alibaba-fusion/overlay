@@ -185,8 +185,9 @@ export function setStyle(node: HTMLElement, name: string | { [key: string]: unkn
     }
 }
 
-export function throttle(func: Function, wait: number) {
-    let previous = 0;
+// 默认首次调用是立刻执行, delay=true 的话首次调用延迟执行
+export function throttle(func: Function, wait: number, delay: boolean = false) {
+    let previous = delay ? Date.now() : -wait;
     return function () {
         let now = Date.now();
         let args = arguments;
@@ -194,6 +195,13 @@ export function throttle(func: Function, wait: number) {
             //@ts-ignore
             func.apply(this, args);
             previous = now;
+        } else if (delay) {
+            setTimeout(() => {
+                //@ts-ignore
+                func.apply(this, args);
+                previous = now;
+                delay = false;
+            }, wait - now + previous)
         }
     }
 }

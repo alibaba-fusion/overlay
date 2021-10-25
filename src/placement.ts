@@ -332,8 +332,6 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
       const { top, left, width, height } = node.getBoundingClientRect();
       if (ttop + theight < top || ttop > top + height || tleft + twidth < left || tleft > left + width) {
         result.style.display = 'none';
-      } else {
-        result.style.display = ''; // 这里一定要显式的删除，带上动效后会删不掉
       }
     });
   }

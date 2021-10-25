@@ -3,7 +3,7 @@ import { CSSProperties, ReactElement } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import { createPortal } from 'react-dom';
 import getPlacements, { pointsType, placementType, PositionResult } from './placement';
-import { useListener, getHTMLElement, getStyle, setStyle, getMountContainer, throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList } from './utils';
+import { useListener, getHTMLElement, getStyle, setStyle, getMountContainer, throttle, debounce, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList } from './utils';
 
 export interface OverlayEvent extends MouseEvent, KeyboardEvent {
   target: EventTarget | null;
@@ -140,6 +140,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
 
   const position = fixed ? 'fixed' : 'absolute';
   const [firstVisible, setFirst] = useState(visible);
+  const [delayRender, setDelayRender] = useState(visible);   // 第一次加载并且 visible=true, 需要delay渲染 (等组件css真正加载完成)
   const [, forceUpdate] = useState(null);
   const positionStyleRef = useRef<CSSProperties>({ position });
   const getContainer = typeof popupContainer === 'string' ? () => document.getElementById(popupContainer) :
@@ -211,7 +212,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
         }
       }
 
-      ro.current = new ResizeObserver(throttle(updatePosition.bind(this), 100));
+      ro.current = new ResizeObserver(throttle(updatePosition.bind(this), 100, delayRender));
       ro.current.observe(containerNode);
 
       forceUpdate({});
@@ -247,7 +248,8 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
 
     // 安全节点不关闭
     for (let i = 0; i < safeNodeList.length; i++) {
-      let node = getHTMLElement(typeof safeNodeList[i] === 'function' ? safeNodeList[i]() : null);
+      const safeNode = typeof safeNodeList[i] === 'function' ? safeNodeList[i]() : null;
+      const node = getHTMLElement(safeNode);
 
       if (node && (node === e.target || node.contains(e.target as Node))) {
         return;
@@ -306,7 +308,13 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
 
   // 第一次加载并且 visible=false 的情况不挂载弹窗
   useEffect(() => {
-    !firstVisible && visible && setFirst(true);
+    if(!firstVisible && visible) {
+      setFirst(true);
+    }
+    // 只要有关闭行为就取消 delayRender
+    if (delayRender && !visible) {
+      setDelayRender(false);
+    }
   }, [visible]);
 
   // cache 情况下的模拟 afterOpen/afterClose
