@@ -1,5 +1,5 @@
 import { CSSProperties } from 'react';
-import { getViewTopLeft, getViewPort } from './utils';
+import { getViewTopLeft, getViewPort, getWidthHeight } from './utils';
 
 type point = 'tl' | 'tc' | 'tr' | 'cl' | 'cc' | 'cr' | 'bl' | 'bc' | 'br';
 export type pointsType = [point, point];
@@ -43,7 +43,7 @@ export interface PlacementsConfig {
   /**
    * 弹窗位置重新计算的回调，可以通过修改范围值自己订正弹窗位置
    */
-  beforePosition?: (result: PositionResult) => PositionResult;
+  beforePosition?: (result: PositionResult, obj: any) => PositionResult;
   autoAdjust?: boolean;
 }
 
@@ -132,33 +132,11 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
   const { width: twidth, height: theight, left: tleft, top: ttop } = target.getBoundingClientRect();
   const { left: cleft, top: ctop } = getViewTopLeft(container);
   const { scrollWidth: cwidth, scrollHeight: cheight, scrollTop: cscrollTop, scrollLeft: cscrollLeft } = container;
-  const { width: owidth, height: oheight } = overlay.getBoundingClientRect();
+  const { width: owidth, height: oheight } = getWidthHeight(overlay);
 
   function getXY(p: placementType | undefined) {
     let basex = tleft - cleft + cscrollLeft;
     let basey = ttop - ctop + cscrollTop;
-
-    let points = opoints;
-    if (p && p in placementMap) {
-      points = placementMap[p];
-
-      if (placementOffset && p.length === 2) {
-        switch (p[0]) {
-          case 't':
-            basey -= placementOffset;
-            break;
-          case 'b':
-            basey += placementOffset;
-            break;
-          case 'l':
-            basex -= placementOffset;
-            break;
-          case 'r':
-            basex += placementOffset;
-            break;
-        }
-      }
-    }
 
     function setPointX(point: string, positive = true, width: number) {
       const plus = positive ? 1 : -1;
@@ -190,11 +168,33 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
       }
     }
 
+    let points = opoints;
+    if (p && p in placementMap) {
+      points = placementMap[p];
+    }
+    
     // 目标元素
     setPointY(points[1][0], true, theight);
     setPointX(points[1][1], true, twidth);
     setPointY(points[0][0], false, oheight);
     setPointX(points[0][1], false, owidth);
+
+    if (placementOffset && p.length >= 1) {
+      switch (p[0]) {
+        case 't':
+          basey -= placementOffset;
+          break;
+        case 'b':
+          basey += placementOffset;
+          break;
+        case 'l':
+          basex -= placementOffset;
+          break;
+        case 'r':
+          basex += placementOffset;
+          break;
+      }
+    }
 
     return {
       points,
@@ -222,33 +222,33 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
   }
 
   function getNewPlacement(l: number, t: number, p: placementType) {
-    if (p.length !== 2) {
-      return p;
+    let np = p.split('');
+    if (np.length === 1) {
+      np.push('');
     }
-    
-    let np: placementType = p;
+
     // 区域不够
     if (t < 0) {
       // [上边 => 下边, 底部对齐 => 顶部对齐]
-      np = [np[0].replace('t', 'b'), np[1].replace('b', 't')] as unknown as placementType;
+      np = [np[0].replace('t', 'b'), np[1].replace('b', 't')];
     }
     // 区域不够
     if (l < 0) {
       // [左边 => 右边, 右对齐 => 左对齐]
-      np = [np[0].replace('l', 'r'), np[1].replace('r', 'l')] as unknown as placementType;
+      np = [np[0].replace('l', 'r'), np[1].replace('r', 'l')];
     }
     // 超出区域
     if (t + oheight > cheight) {
       // [下边 => 上边, 顶部对齐 => 底部对齐]
-      np = [np[0].replace('b', 't'), np[1].replace('t', 'b')] as unknown as placementType;
+      np = [np[0].replace('b', 't'), np[1].replace('t', 'b')];
     }
     // 超出区域
     if (l + owidth > cwidth) {
       // [右边 => 左边, 左对齐 => 右对齐]
-      np = [np[0].replace('r', 'l'), np[1].replace('l', 'r')] as unknown as placementType;
+      np = [np[0].replace('r', 'l'), np[1].replace('l', 'r')];
     }
 
-    return np;
+    return np.join('') as placementType;
   }
 
   function ajustLeftAndTop(l: number, t: number) {
@@ -337,7 +337,16 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
   }
 
   if (beforePosition && typeof beforePosition) {
-    return beforePosition(result);
+    return beforePosition(result, {
+      target: {
+        node: target,
+        width: twidth, height: theight, left: tleft, top: ttop
+      },
+      overlay: {
+        node: overlay,
+        width: owidth, height: oheight
+      }
+    });
   }
 
   return result;

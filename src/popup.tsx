@@ -3,7 +3,7 @@ import { CSSProperties, ReactElement } from 'react';
 
 import Overlay, { OverlayEvent } from './overlay';
 import { placementType } from './placement';
-import { makeChain, saveRef } from './utils';
+import { getHTMLElement, makeChain, saveRef } from './utils';
 
 type TriggerType = 'click' | 'hover' | 'focus';
 export type TriggerTypes = Array<TriggerType>;
@@ -45,12 +45,6 @@ export interface PopupProps {
    */
   children?: ReactElement;
   style?: CSSProperties;
-  onClick?: (e: Event) => void;
-  onKeyDown?: (e: KeyboardEvent) => void;
-  onMouseEnter?: (e: Event) => void;
-  onMouseLeave?: (e: Event) => void;
-  onFocus?: (e: Event) => void;
-  onBlur?: (e: Event) => void;
   delay?: number;
   overlayProps?: any;
   safeNode?: Array<() => Element>;
@@ -81,12 +75,6 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     container = body,
     style = {},
     placement = "bl",
-    onClick,
-    onKeyDown,
-    onMouseEnter,
-    onMouseLeave,
-    onFocus,
-    onBlur,
     delay = 200,
     overlayProps = {},
     safeNode,
@@ -202,18 +190,18 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
   triggerTypeList.forEach(t => {
     switch (t) {
       case 'click':
-        triggerProps.onClick = makeChain(handleClick, onClick);
-        triggerProps.onKeyDown = makeChain(handleKeyDown, onKeyDown);
+        triggerProps.onClick = makeChain(handleClick, child?.props?.onClick);
+        triggerProps.onKeyDown = makeChain(handleKeyDown, child?.props?.onKeyDown);
         break;
       case 'hover':
-        triggerProps.onMouseEnter = makeChain(handleMouseEnter('trigger'), onMouseEnter);
-        triggerProps.onMouseLeave = makeChain(handleMouseLeave('trigger'), onMouseLeave);
+        triggerProps.onMouseEnter = makeChain(handleMouseEnter('trigger'), child?.props?.onMouseEnter);
+        triggerProps.onMouseLeave = makeChain(handleMouseLeave('trigger'), child?.props?.onMouseLeave);
         overlayOtherProps.onMouseEnter = makeChain(handleMouseEnter('overlay'), overlayProps.onMouseEnter);
         overlayOtherProps.onMouseLeave = makeChain(handleMouseLeave('overlay'), overlayProps.onMouseLeave);
         break;
       case 'focus':
-        triggerProps.onFocus = makeChain(handleFocus, onFocus);
-        triggerProps.onBlur = makeChain(handleBlur, onBlur);
+        triggerProps.onFocus = makeChain(handleFocus, child?.props?.onFocus);
+        triggerProps.onBlur = makeChain(handleBlur, child?.props?.onBlur);
         overlayOtherProps.onMouseDown = makeChain(handleOverlayClick, overlayProps.onMouseDown);
         break;
     }
@@ -231,7 +219,8 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
   }
 
   const getContainer = typeof container === 'string' ? () => document.getElementById(container) :
-    typeof container !== 'function' ? () => container : () => container(triggerRef.current);
+    typeof container !== 'function' ? () => container : () => container(getHTMLElement(triggerRef.current));
+  const overlayContainer = followTrigger ? () => getHTMLElement(triggerRef.current)?.parentNode : getContainer;
 
   return <>
     {child && React.cloneElement(child, triggerProps)}
@@ -239,7 +228,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
       {...others}
       {...overlayOtherProps}
       placement={placement}
-      container={followTrigger ? () => triggerRef.current && triggerRef.current.parentNode : getContainer}
+      container={overlayContainer}
       safeNode={safeNodes}
       visible={visible}
       target={() => triggerRef.current}

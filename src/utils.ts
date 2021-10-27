@@ -185,9 +185,9 @@ export function setStyle(node: HTMLElement, name: string | { [key: string]: unkn
     }
 }
 
-// 默认首次调用是立刻执行, delay=true 的话首次调用延迟执行
-export function throttle(func: Function, wait: number, delay: boolean = false) {
-    let previous = delay ? Date.now() : -wait;
+// 默认首次调用是立刻执行
+export function throttle(func: Function, wait: number) {
+    let previous = -wait;
     return function () {
         let now = Date.now();
         let args = arguments;
@@ -195,13 +195,6 @@ export function throttle(func: Function, wait: number, delay: boolean = false) {
             //@ts-ignore
             func.apply(this, args);
             previous = now;
-        } else if (delay) {
-            setTimeout(() => {
-                //@ts-ignore
-                func.apply(this, args);
-                previous = now;
-                delay = false;
-            }, wait - now + previous)
         }
     }
 }
@@ -240,6 +233,29 @@ export function getViewTopLeft(node: HTMLElement) {
     }
 }
 
+/**
+ * get element size
+ * offsetWidth/offsetHeight 更容易获取真实大小，不会受到动画影响优先使用。
+ * @param       {Element} element
+ * @return      {Object}
+ */
+ export function getWidthHeight(element: HTMLElement) {
+    // element like `svg` do not have offsetWidth and offsetHeight prop
+    // then getBoundingClientRect
+    if ('offsetWidth' in element && 'offsetHeight' in element) {
+        return {
+            width: element.offsetWidth,
+            height: element.offsetHeight,
+        };
+    } else {
+        const { width, height } = element.getBoundingClientRect();
+
+        return {
+            width,
+            height,
+        };
+    }
+}
 
 /**
  * 获取默认的滚动条大小

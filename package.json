@@ -36,7 +36,6 @@
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
     "@wojtekmaj/enzyme-adapter-react-17": "^0.6.3",
-    "simulate-event": "^1.4.0",
     "build-plugin-component": "^1.0.0",
     "build-plugin-fusion": "^0.1.0",
     "build-plugin-moment-locales": "^0.1.0",
@@ -44,6 +43,7 @@
     "eslint": "^6.8.0",
     "react": "^17.0.0",
     "react-dom": "^17.0.0",
+    "simulate-event": "^1.4.0",
     "stylelint": "^13.7.2"
   },
   "componentConfig": {

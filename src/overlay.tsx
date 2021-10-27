@@ -3,7 +3,7 @@ import { CSSProperties, ReactElement } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import { createPortal } from 'react-dom';
 import getPlacements, { pointsType, placementType, PositionResult } from './placement';
-import { useListener, getHTMLElement, getStyle, setStyle, getMountContainer, throttle, debounce, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList } from './utils';
+import { useListener, getHTMLElement, getStyle, setStyle, getMountContainer, throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList } from './utils';
 
 export interface OverlayEvent extends MouseEvent, KeyboardEvent {
   target: EventTarget | null;
@@ -44,11 +44,11 @@ export interface OverlayProps {
   /**
    * 弹窗打开后的回调（此时弹窗挂载成功)
    */
-  afterOpen?: Function;
+  onOpen?: Function;
   /**
    * 弹窗关闭后的回调
    */
-  afterClose?: Function;
+  onClose?: Function;
 
   hasMask?: boolean; // 仅仅为了兼容
   canCloseByMask?: boolean; // 仅仅为了兼容
@@ -77,6 +77,7 @@ export interface OverlayProps {
    * 是否自动聚焦弹窗
    */
   autoFocus?: boolean;
+  isAnimationEnd?: boolean;
 }
 
 
@@ -102,7 +103,7 @@ const hasScroll = (containerNode: HTMLElement) => {
   );
 };
 
-const Overlay = React.forwardRef((props: OverlayProps, ref) => {
+const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
   const body = () => document.body;
   const {
     target,
@@ -115,8 +116,8 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     fixed,
     visible,
     onRequestClose = () => { },
-    afterOpen,
-    afterClose,
+    onOpen,
+    onClose,
     container: popupContainer = body,
     style = {},
     placement,
@@ -135,12 +136,12 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     cache = false,
     autoAdjust,
     autoFocus = false,
+    isAnimationEnd = true,
     ...others
   } = props;
 
   const position = fixed ? 'fixed' : 'absolute';
   const [firstVisible, setFirst] = useState(visible);
-  const [delayRender, setDelayRender] = useState(visible);   // 第一次加载并且 visible=true, 需要delay渲染 (等组件css真正加载完成)
   const [, forceUpdate] = useState(null);
   const positionStyleRef = useRef<CSSProperties>({ position });
   const getContainer = typeof popupContainer === 'string' ? () => document.getElementById(popupContainer) :
@@ -190,7 +191,6 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
   const overlayRefCallback = useCallback((nodeRef) => {
     const node = getHTMLElement(nodeRef);
     overlayRef.current = node;
-    callRef(ref, node);
     callRef((child as any).ref, node);
 
     if (node !== null && container) {
@@ -204,21 +204,26 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
 
       overflowRef.current = getOverflowNodes(targetNode, containerNode);
 
-      if (autoFocus) {
-        const focusableNodes = getFocusNodeList(node);
-        if (focusableNodes.length > 0 && focusableNodes[0]) {
-          lastFocus.current = document.activeElement;
-          focusableNodes[0].focus();
-        }
-      }
-
-      ro.current = new ResizeObserver(throttle(updatePosition.bind(this), 100, delayRender));
+      const waitTime = 100;
+      ro.current = new ResizeObserver(throttle(updatePosition.bind(this), waitTime));
       ro.current.observe(containerNode);
 
       forceUpdate({});
-      !cache && typeof afterOpen === 'function' && afterOpen(node);
+
+      if (autoFocus) {
+        // 需要等弹窗位置计算完成，否则会出现突然滚动到页面最下方的情况
+        setTimeout(() => {
+          const focusableNodes = getFocusNodeList(node);
+          if (focusableNodes.length > 0 && focusableNodes[0]) {
+            lastFocus.current = document.activeElement;
+            focusableNodes[0].focus();
+          }
+        }, waitTime)
+      }
+
+      !cache && onOpen?.(node);
     } else {
-      !cache && typeof afterClose === 'function' && afterClose(node);
+      !cache && onClose?.();
       if (ro.current) {
         ro.current.disconnect();
         ro.current = null;
@@ -311,21 +316,17 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     if(!firstVisible && visible) {
       setFirst(true);
     }
-    // 只要有关闭行为就取消 delayRender
-    if (delayRender && !visible) {
-      setDelayRender(false);
-    }
   }, [visible]);
 
-  // cache 情况下的模拟 afterOpen/afterClose
+  // cache 情况下的模拟 onOpen/onClose
   const overlayNode = overlayRef.current; // overlayRef.current 可能会异步变化，所以要先接下
   useEffect(() => {
     if (cache && overlayNode) {
       if (visible) {
         updatePosition();
-        typeof afterOpen === 'function' && afterOpen(overlayNode);
+        onOpen?.(overlayNode);
       } else {
-        typeof afterClose === 'function' && afterClose();
+        onClose?.();
       }
     }
   }, [visible, cache && overlayNode]);
@@ -354,7 +355,7 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
     return null;
   }
 
-  if (!visible && !cache) {
+  if (!visible && !cache && isAnimationEnd) {
     return null;
   }
 
@@ -365,11 +366,11 @@ const Overlay = React.forwardRef((props: OverlayProps, ref) => {
   }) : null;
 
   const wrapperStyle: any = {};
-  if (cache && !visible) {
+  if (cache && !visible && isAnimationEnd) {
     wrapperStyle.display = 'none';
   }
 
-  const content = (<div className={wrapperClassName} style={wrapperStyle}>
+  const content = (<div className={wrapperClassName} style={wrapperStyle} ref={ref}>
     {hasMask ? <div className={maskClassName} style={maskStyle} ref={maskRef}></div> : null}
     {newChildren}
   </div>);
