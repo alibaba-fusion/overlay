@@ -60,6 +60,7 @@ export interface PopupProps {
   autoHideScrollOverflow?: boolean;
   followTrigger?: boolean;
   canCloseByEsc?: boolean;
+  canCloseByTrigger?: boolean;
 }
 
 const Popup = React.forwardRef((props: PopupProps, ref) => {
@@ -75,6 +76,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     container = body,
     style = {},
     placement = "bl",
+    canCloseByTrigger = true,
     delay = 200,
     overlayProps = {},
     safeNode,
@@ -117,6 +119,9 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
 
   const handleClick = (e: OverlayEvent) => {
     e.targetType = 'trigger';
+    if (visible && !canCloseByTrigger) {
+      return;
+    }
     handleVisibleChange(!visible, e);
   }
 

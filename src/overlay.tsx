@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, cloneElement } from 'react';
 import { CSSProperties, ReactElement } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import { createPortal } from 'react-dom';
@@ -60,6 +60,7 @@ export interface OverlayProps {
   wrapperStyle?: CSSProperties;
   maskClassName?: string;
   maskStyle?: CSSProperties;
+  maskRender?: (node: ReactElement) => ReactElement;
 
   /**
    * 弹窗内容
@@ -111,6 +112,9 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     wrapperClassName,
     maskClassName,
     maskStyle,
+    hasMask,
+    canCloseByMask = true,
+    maskRender,
     points,
     offset,
     fixed,
@@ -119,11 +123,8 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     onOpen,
     onClose,
     container: popupContainer = body,
-    style = {},
     placement,
     placementOffset,
-    hasMask,
-    canCloseByMask = true,
     disableScroll = true,
     canCloseByOutSideClick = true,
     canCloseByEsc = true,
@@ -207,18 +208,19 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
       const waitTime = 100;
       ro.current = new ResizeObserver(throttle(updatePosition.bind(this), waitTime));
       ro.current.observe(containerNode);
+      ro.current.observe(node);
 
       forceUpdate({});
 
       if (autoFocus) {
-        // 需要等弹窗位置计算完成，否则会出现突然滚动到页面最下方的情况
+        // 这里setTimeout是等弹窗位置计算完成再进行 focus，否则弹窗还在页面最低端，会出现突然滚动到页面最下方的情况
         setTimeout(() => {
           const focusableNodes = getFocusNodeList(node);
           if (focusableNodes.length > 0 && focusableNodes[0]) {
             lastFocus.current = document.activeElement;
             focusableNodes[0].focus();
           }
-        }, waitTime)
+        }, waitTime);
       }
 
       !cache && onOpen?.(node);
@@ -288,7 +290,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     updatePosition();
   }
 
-  useListener(overflowRef.current, 'scroll', scrollEvent as any, false, !!(visible && overlayRef.current && overflowRef.current.length))
+  useListener(overflowRef.current, 'scroll', scrollEvent as any, false, !!(visible && overlayRef.current?.length))
 
   // 有弹窗情况下在 body 增加 overflow:hidden，两个弹窗同时存在也没问题，会按照堆的方式依次 pop
   useEffect(() => {
@@ -359,7 +361,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     return null;
   }
 
-  const newChildren = child ? React.cloneElement(child, {
+  const newChildren = child ? cloneElement(child, {
     ...others,
     ref: overlayRefCallback,
     style: { ...child.props.style, ...positionStyleRef.current }
@@ -370,8 +372,10 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     wrapperStyle.display = 'none';
   }
 
+  const maskNode = <div className={maskClassName} style={maskStyle} ref={maskRef}></div>
+
   const content = (<div className={wrapperClassName} style={wrapperStyle} ref={ref}>
-    {hasMask ? <div className={maskClassName} style={maskStyle} ref={maskRef}></div> : null}
+    {hasMask? (maskRender? maskRender(maskNode): maskNode) : null}
     {newChildren}
   </div>);
 
