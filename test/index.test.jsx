@@ -7,7 +7,9 @@ import Adapter from '@wojtekmaj/enzyme-adapter-react-17';
 configure({ adapter: new Adapter() });
 
 import Overlay from '../src/index';
+
 const { Popup } = Overlay;
+const delay = time => new Promise(resolve => setTimeout(resolve, time));
 
 const style = {
   width: 200,
@@ -20,7 +22,6 @@ const style = {
 const render = element => {
   let inc;
   const container = document.createElement('div');
-  container.className = 'container';
   document.body.appendChild(container);
   ReactDOM.render(element, container, function () {
     inc = this;
@@ -40,8 +41,15 @@ const render = element => {
       return inc;
     },
     find: selector => {
-      return container.querySelectorAll(selector);;
+      const node = document.querySelectorAll(selector);
+      if (node.length) {
+        node.simulate = (eventType) => {
+          simulateEvent.simulate(node[0], eventType);
+        }
+      }
+      return node;
     },
+    update: () => {},
   };
 };
 
@@ -63,8 +71,8 @@ describe('Overlay', () => {
     }
   });
 
-  it('renders', () => {
-    const wrapper = shallow(<Overlay
+  it('renders', async () => {
+    const wrapper = mount(<Overlay
       visible
       points={['lt', 'tr']}
     >
@@ -84,9 +92,10 @@ describe('Overlay', () => {
     expect(wrapper.find('.content').length).toBe(1);
   });
 
-  it('should support rendering overlay and mask', () => {
-    wrapper = shallow(
+  it('should support rendering overlay and mask', async () => {
+    wrapper = mount(
       <Overlay
+        visible={false}
         wrapperClassName="next-overlay-wrapper"
         maskClassName="next-overlay-backdrop"
       >
@@ -98,6 +107,8 @@ describe('Overlay', () => {
     wrapper.setProps({
       visible: true,
     });
+    wrapper.update();
+
     expect(wrapper.find('.next-overlay-wrapper').length).toBe(1);
     expect(wrapper.find('.content').length).toBe(1);
     expect(wrapper.find('.next-overlay-backdrop').length).toBe(0);
@@ -106,6 +117,7 @@ describe('Overlay', () => {
       visible: true,
       hasMask: true,
     });
+    await delay(20);
     expect(wrapper.find('.next-overlay-wrapper').length).toBe(1);
     expect(wrapper.find('.content').length).toBe(1);
     expect(wrapper.find('.next-overlay-backdrop').length).toBe(1);
@@ -172,6 +184,41 @@ describe('Overlay', () => {
     expect(handleClose).toBeCalledTimes(1);
   });
 
+  const maskStyle = {
+    position: 'fixed',
+    zIndex: 1001,
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(0,0,0,.2)',
+  };
+
+  it('should support canCloseByMask', async () => {
+    const handleClose = jest.fn();
+
+    wrapper = render(
+    <Overlay visible hasMask canCloseByMask={false} onRequestClose={handleClose} maskClassName="next-overlay-backdrop" maskStyle={maskStyle}>
+      <div className="content" />
+    </Overlay>);
+
+    await delay(200)
+    expect(document.querySelectorAll('.next-overlay-backdrop').length).toBe(1)
+    simulateEvent.simulate(document.querySelector('.next-overlay-backdrop'), 'mousedown');
+    expect(handleClose).toBeCalledTimes(0);
+
+    wrapper.setProps({
+        canCloseByMask: true,
+    });
+    wrapper.update();
+
+    simulateEvent.simulate(document.querySelector('.next-overlay-backdrop'), 'mousedown');
+
+    wrapper.update();
+
+    expect(handleClose).toBeCalledTimes(1);
+  });
+
   it('should support cache', () => {
     wrapper = mount(<Overlay visible cache>
       <div className="content" />
@@ -222,27 +269,47 @@ describe('Overlay', () => {
     expect(onClose).toBeCalledTimes(1);
   });
 
-  it('should support autoFocus', () => {
-    wrapper = mount(<Overlay autoFocus visible>
+  it('should support autoFocus', async () => {
+    wrapper = render(<Overlay autoFocus visible>
       <div className="content" >
         <input id="input" />
       </div>
     </Overlay>);
+    await delay(200);
+
     expect(document.activeElement).toBe(document.querySelector('input'));
     wrapper.setProps({
       visible: false
     });
+    await delay(200);
+
     expect(document.activeElement).toBe(document.body);
   });
-});
+  it('should propagate click event to parent DOM', async () => {
+    const clickHandler = jest.fn();
 
-const delay = time => new Promise(resolve => setTimeout(resolve, time));
+    wrapper = render(
+        <div id="overlay-container" onClick={clickHandler}>
+            <Overlay visible container={'overlay-container'}>
+                <div className="content-element" />
+            </Overlay>
+        </div>
+    );
+
+    await delay(20);
+    expect(wrapper.find('.content-element').length).toBe(1);
+
+    simulateEvent.simulate(document.querySelector('.content-element'), 'click');
+
+    expect(clickHandler).toBeCalledTimes(1);
+  });
+});
 
 describe('Popup', () => {
   let wrapper;
 
   beforeEach(() => {
-    const nodeListArr = [].slice.call(document.querySelectorAll('.next-overlay-wrapper'));
+    const nodeListArr = [].slice.call(document.querySelectorAll('div'));
 
     nodeListArr.forEach(node => {
       node.parentNode.removeChild(node);
@@ -257,61 +324,106 @@ describe('Popup', () => {
   });
 
   it('renders', async () => {
-    wrapper = render(<Popup overlay={<div style={style} id="content" className="content">Hello World From Popup!</div>}>
+    const wrapper = mount(<Popup overlay={<div style={style} id="content" className="content">Hello World From Popup!</div>}>
       <button>Open</button>
     </Popup>);
 
-    expect(document.querySelectorAll('.content').length).toBe(0);
-    expect(document.querySelectorAll('button').length).toBe(1);
+    expect(wrapper.find('.content').length).toBe(0);
+    expect(wrapper.find('button').length).toBe(1);
 
     wrapper.setProps({
       visible: true,
     });
+    wrapper.update();
 
     expect(wrapper.find('button').length).toBe(1);
-    expect(document.querySelectorAll('.content').length).toBe(1);
+    expect(wrapper.find('.content').length).toBe(1);
 
     wrapper.setProps({
       visible: false,
     });
-    expect(document.querySelectorAll('.content').length).toBe(0);
+    wrapper.update();
+
+    expect(wrapper.find('.content').length).toBe(0);
   });
 
   it('should support triggerType=click', async () => {
-    wrapper = render(<Popup
+    wrapper = mount(<Popup
       triggerType="click"
       overlay={<div style={style} id="content" className="content">Hello World From Popup!</div>}>
       <button>Open</button>
     </Popup>);
 
-    expect(document.querySelectorAll('button').length).toBe(1);
-    expect(document.querySelectorAll('.content').length).toBe(0);
+    expect(wrapper.find('button').length).toBe(1);
+    expect(wrapper.find('.content').length).toBe(0);
 
-    simulateEvent.simulate(document.querySelector('button'), 'click');
-    expect(document.querySelectorAll('.content').length).toBe(1);
+    wrapper.find('button').simulate('click');
+    wrapper.update();
+    expect(wrapper.find('.content').length).toBe(1);
 
     act(() => {
       simulateEvent.simulate(document.body, 'mousedown');
     })
-    expect(document.querySelectorAll('.content').length).toBe(0);
+    wrapper.update();
+
+    expect(wrapper.find('.content').length).toBe(0);
   });
 
-  it('should support triggerType=hover', async () => {
+  it('should support triggerType=focus', async () => {
+    wrapper = mount(<Popup
+      triggerType="focus"
+      overlay={<div style={style} id="content" className="content">Hello World From Popup!</div>}>
+      <button>Open</button>
+    </Popup>);
+
+    expect(wrapper.find('button').length).toBe(1);
+    expect(wrapper.find('.content').length).toBe(0);
+
+    wrapper.find('button').simulate('focus');
+    wrapper.update();
+    expect(wrapper.find('.content').length).toBe(1);
+
+    wrapper.find('button').simulate('blur');
+    wrapper.update();
+    expect(wrapper.find('.content').length).toBe(0);
+  });
+
+  it.skip('should support triggerType=hover', async () => {
     wrapper = render(<Popup
       triggerType="hover"
       overlay={<div style={style} id="content" className="content">Hello World From Popup!</div>}>
       <button>Open</button>
     </Popup>);
 
-    expect(document.querySelectorAll('button').length).toBe(1);
-    expect(document.querySelectorAll('.content').length).toBe(0);
+    expect(wrapper.find('button').length).toBe(1);
+    expect(wrapper.find('.content').length).toBe(0);
 
-    simulateEvent.simulate(document.querySelector('button'), 'mouseover');
-    await delay(220);
-    expect(document.querySelectorAll('.content').length).toBe(1);
+    wrapper.find('button').simulate('mouseenter');
+    wrapper.update();
+    expect(wrapper.find('.content').length).toBe(1);
 
-    simulateEvent.simulate(document.querySelector('button'), 'mouseout');
-    await delay(220);
-    expect(document.querySelectorAll('.content').length).toBe(0);
+    wrapper.find('button').simulate('mouseleave');
+    wrapper.update();
+    expect(wrapper.find('.content').length).toBe(0);
+  });
+
+  it('should placement be bottom', async () => {
+    const overlay = <div
+      className="next-overlay-inner"
+      style={{
+          width: '200px',
+          height: '200px',
+          background: 'red',
+      }}
+    >
+      Hello World From Popup!
+    </div>;
+    wrapper = mount(<Popup visible cache overlay={overlay} placement="b">
+      <button style={{width: 10, height: 10}}>click</button>
+    </Popup>);
+
+    expect(wrapper.find('.next-overlay-inner').length).toBe(1);
+    // jest 环境无法精确模拟
+    // expect(document.querySelector('.next-overlay-inner').style.left).toBe('10px');
   });
 })

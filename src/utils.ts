@@ -137,6 +137,11 @@ export const getOverflowNodes = (targetNode: HTMLElement, container: HTMLElement
     return overflowNodes;
 };
 
+/**
+ * 计算出弹窗应该相对哪个节点做宽高适配，目前是按滚动节点计算。
+ * @param container 
+ * @returns 
+ */
 export function getViewPort(container: HTMLElement) {
     let calcContainer: HTMLElement = container;
 

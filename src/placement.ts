@@ -273,7 +273,7 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
 
   const viewport = getViewPort(container);
 
-  // step2: 根据 viewport（挂载容器不一定是可视区）重新计算位置. 根据可视区域优化位置
+  // step2: 根据 viewport（挂载容器不一定是可视区, eg: 挂载在父节点，但是弹窗超出父节点）重新计算位置. 根据可视区域优化位置
   // 位置动态优化思路见 https://github.com/alibaba-fusion/overlay/issues/2
   if (autoAdjust && placement && shouldResizePlacement(left, top, viewport)) {
     const nplacement = getNewPlacement(left, top, placement);
@@ -322,7 +322,7 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
    * step3: 滚动隐藏弹窗逻辑
    * 触发条件: target 和 document.body 之间存在 overflow 滚动元素， target 进入不可见区域
    */
-  if (autoHideScrollOverflow && placement && scrollNode.length) {
+  if (autoHideScrollOverflow && placement && scrollNode?.length) {
     // 滚动改成 transform 提高性能, 但是有动效问题
     // result.style.transform = `translate3d(${result.style.left}px, ${result.style.top}px, 0px)`;
     // result.style.left = 0;
