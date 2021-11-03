@@ -77,11 +77,11 @@ export function saveRef(ref: any) {
 }
 
 /**
- * 获取 position != static 的容器
+ * 获取 position != static ，用来计算相对位置的容器
  * @param container 
  * @returns 
  */
-export const getMountContainer = (container: HTMLElement) => {
+export const getRelativeContainer = (container: HTMLElement) => {
     if (typeof document === undefined) {
         return container;
     }
@@ -100,6 +100,7 @@ export const getMountContainer = (container: HTMLElement) => {
 
 /**
  * 获取 target 和 container 之间会滚动的元素 (不包含 target、container)
+ * 用来监听滚动元素，自动更新弹窗位置
  * @param targetNode 
  * @param container 
  * @returns 
@@ -138,21 +139,17 @@ export const getOverflowNodes = (targetNode: HTMLElement, container: HTMLElement
 };
 
 /**
- * 计算出弹窗应该相对哪个节点做宽高适配，目前是按滚动节点计算。
+ * 获取可视区域，用来计算弹窗应该相对哪个节点做上下左右的位置变化。
  * @param container 
  * @returns 
  */
 export function getViewPort(container: HTMLElement) {
     let calcContainer: HTMLElement = container;
 
-    while (!calcContainer) {
+    while (calcContainer) {
         const overflow = getStyle(calcContainer, 'overflow');
-        if (overflow.match(/auto|scroll|hidden/)) {
-            const { clientWidth, clientHeight, scrollWidth, scrollHeight } = calcContainer;
-            if (clientHeight !== scrollHeight || clientWidth !== scrollWidth) {
-                // console.log('overflow node is: ', calcContainer )
-                return calcContainer;
-            }
+        if (overflow?.match(/auto|scroll|hidden/)) {
+            return calcContainer;
         }
 
         calcContainer = calcContainer.parentNode as HTMLElement;

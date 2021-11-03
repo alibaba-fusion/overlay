@@ -117,7 +117,7 @@ describe('Overlay', () => {
       visible: true,
       hasMask: true,
     });
-    await delay(20);
+    wrapper.update();
     expect(wrapper.find('.next-overlay-wrapper').length).toBe(1);
     expect(wrapper.find('.content').length).toBe(1);
     expect(wrapper.find('.next-overlay-backdrop').length).toBe(1);
@@ -135,9 +135,10 @@ describe('Overlay', () => {
     expect(handleClose).toBeCalledTimes(1);
   });
 
-  it('should support canCloseByOutSideClick by click button', () => {
+  it('should support canCloseByOutSideClick by click button', async () => {
     const handleClose = jest.fn();
 
+    // 需要冒泡环境
     wrapper = render(
       <div>
         <button>click</button>
@@ -146,7 +147,7 @@ describe('Overlay', () => {
         </Overlay>
       </div>);
 
-    simulateEvent.simulate(document.querySelector('button'), 'mousedown');
+    wrapper.find('button').simulate('mousedown');
     expect(handleClose).toBeCalledTimes(1);
   });
 
@@ -388,8 +389,10 @@ describe('Popup', () => {
     expect(wrapper.find('.content').length).toBe(0);
   });
 
-  it.skip('should support triggerType=hover', async () => {
-    wrapper = render(<Popup
+  it('should support triggerType=hover', async () => {
+    jest.useFakeTimers();
+
+    wrapper = mount(<Popup
       triggerType="hover"
       overlay={<div style={style} id="content" className="content">Hello World From Popup!</div>}>
       <button>Open</button>
@@ -398,13 +401,20 @@ describe('Popup', () => {
     expect(wrapper.find('button').length).toBe(1);
     expect(wrapper.find('.content').length).toBe(0);
 
-    wrapper.find('button').simulate('mouseenter');
+    wrapper.find('button').at(0).simulate('mouseenter');
+    act(() => {
+      jest.runAllTimers();
+    });
     wrapper.update();
     expect(wrapper.find('.content').length).toBe(1);
 
     wrapper.find('button').simulate('mouseleave');
+    act(() => {
+      jest.runAllTimers();
+    });
     wrapper.update();
     expect(wrapper.find('.content').length).toBe(0);
+    jest.useRealTimers();
   });
 
   it('should placement be bottom', async () => {
@@ -418,10 +428,11 @@ describe('Popup', () => {
     >
       Hello World From Popup!
     </div>;
-    wrapper = mount(<Popup visible cache overlay={overlay} placement="b">
+    wrapper = render(<Popup visible cache overlay={overlay} placement="b" autoAdjust={false}>
       <button style={{width: 10, height: 10}}>click</button>
     </Popup>);
 
+    await delay(100)
     expect(wrapper.find('.next-overlay-inner').length).toBe(1);
     // jest 环境无法精确模拟
     // expect(document.querySelector('.next-overlay-inner').style.left).toBe('10px');

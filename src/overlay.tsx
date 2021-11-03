@@ -3,7 +3,7 @@ import { CSSProperties, ReactElement } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import { createPortal } from 'react-dom';
 import getPlacements, { pointsType, placementType, PositionResult } from './placement';
-import { useListener, getHTMLElement, getStyle, setStyle, getMountContainer, throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList } from './utils';
+import { useListener, getHTMLElement, getStyle, setStyle, getRelativeContainer, throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList } from './utils';
 
 export interface OverlayEvent extends MouseEvent, KeyboardEvent {
   target: EventTarget | null;
@@ -195,7 +195,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     callRef((child as any).ref, node);
 
     if (node !== null && container) {
-      const containerNode = getMountContainer(getHTMLElement(container));
+      const containerNode = getRelativeContainer(getHTMLElement(container));
       containerRef.current = containerNode;
 
       let taretElement = target && target !== 'viewport' ? (typeof target === 'string' ? () => document.getElementById(target) : target)() :
@@ -364,7 +364,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
   const newChildren = child ? cloneElement(child, {
     ...others,
     ref: overlayRefCallback,
-    style: { ...child.props.style, ...positionStyleRef.current }
+    style: { top: 0, left: 0, ...child.props.style, ...positionStyleRef.current }
   }) : null;
 
   const wrapperStyle: any = {};
