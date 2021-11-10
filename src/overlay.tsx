@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useRef, cloneElement } from 'r
 import { CSSProperties, ReactElement } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import { createPortal } from 'react-dom';
-import getPlacements, { pointsType, placementType, PositionResult } from './placement';
+import getPlacements, { pointsType, placementType, PositionResult, TargetRect } from './placement';
 import { useListener, getHTMLElement, getStyle, setStyle, getRelativeContainer, throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList } from './utils';
 
 export interface OverlayEvent extends MouseEvent, KeyboardEvent {
@@ -14,7 +14,7 @@ export interface OverlayProps {
   /**
    * 弹窗定位的参考元素
    */
-  target?: Function | string;
+  target?: (() => TargetRect | HTMLElement) | string;
 
   container?: () => HTMLElement;
 
@@ -289,8 +289,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     }
     updatePosition();
   }
-
-  useListener(overflowRef.current, 'scroll', scrollEvent as any, false, !!(visible && overlayRef.current?.length))
+  useListener(overflowRef.current, 'scroll', scrollEvent as any, false, !!(visible && overlayRef.current && overflowRef.current?.length))
 
   // 有弹窗情况下在 body 增加 overflow:hidden，两个弹窗同时存在也没问题，会按照堆的方式依次 pop
   useEffect(() => {

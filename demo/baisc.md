@@ -45,8 +45,8 @@ class Demo extends React.Component {
                     target={() => this.btn}
                     safeNode={() => this.btn}
                     onRequestClose={this.onClose}
-                    afterOpen={()=>console.log(/open/)}
-                    afterClose={()=>console.log(/close/)}
+                    onOpen={()=>console.log(/open/)}
+                    onClose={()=>console.log(/close/)}
                     >
                     <div style={{
                         width: 200,

@@ -5,12 +5,25 @@ type point = 'tl' | 'tc' | 'tr' | 'cl' | 'cc' | 'cr' | 'bl' | 'bc' | 'br';
 export type pointsType = [point, point];
 export type placementType = 'tl' | 't' | 'tr' | 'rt' | 'r' | 'rb' | 'bl' | 'b' | 'br' | 'lt' | 'l' | 'lb';
 
+export interface TargetRect {
+  width: number;
+  height: number;
+  /**
+   * 相对网页最左侧间距
+   */
+  left: number;
+  /**
+   * 相对网页顶部间距
+   */
+  top: number;
+};
+
 export interface PlacementsConfig {
   position: 'absolute' | 'fixed';
   /**
    * 弹窗的目标定位元素
    */
-  target: HTMLElement;
+  target: HTMLElement | { getBoundingClientRect: () => TargetRect };
   /**
    * 弹窗
    */
@@ -172,7 +185,7 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
     if (p && p in placementMap) {
       points = placementMap[p];
     }
-    
+
     // 目标元素
     setPointY(points[1][0], true, theight);
     setPointX(points[1][1], true, twidth);
@@ -303,14 +316,14 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
         left = nleft;
         top = ntop;
       }
-    } 
-    
+    }
+
     const { left: nleft, top: ntop } = ajustLeftAndTop(left, top);
     left = nleft;
     top = ntop;
   }
 
-  const result = <PositionResult> {
+  const result = <PositionResult>{
     config: {
       placement,
       points,
