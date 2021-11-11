@@ -21,9 +21,9 @@ const style = {
 }
 
 const Demo = () => {
-    const [followTrigger, setFollowTrigger] = useState(true);
+    const [followTrigger, setFollowTrigger] = useState(false);
 
-    const overlay = (<div style={{...style}}>
+    const overlay = (<div style={{...style}} >
         <Popup 
             overlay={<div style={style}><p>挂载容器没有overflow:hidden, 依然超出容器展示，不会因为挂载容器小自动订正位置，viewport 任然为 body</p></div>}
             followTrigger={followTrigger}
@@ -43,8 +43,6 @@ const Demo = () => {
         </Popup>
     </div>);
 }
-
-
 
 ReactDOM.render(<Demo/>, mountNode);
 ```

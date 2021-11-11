@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useCallback, useRef, cloneElement } from 'react';
+import React, { useEffect, useState, useCallback, useRef, cloneElement, useContext } from 'react';
 import { CSSProperties, ReactElement } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import { createPortal } from 'react-dom';
 import getPlacements, { pointsType, placementType, PositionResult, TargetRect } from './placement';
 import { useListener, getHTMLElement, getStyle, setStyle, getRelativeContainer, throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList } from './utils';
+import OverlayContext from './overlay-context';
 
 export interface OverlayEvent extends MouseEvent, KeyboardEvent {
   target: EventTarget | null;
@@ -142,6 +143,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
   } = props;
 
   const position = fixed ? 'fixed' : 'absolute';
+
   const [firstVisible, setFirst] = useState(visible);
   const [, forceUpdate] = useState(null);
   const positionStyleRef = useRef<CSSProperties>({ position });
@@ -155,6 +157,27 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
   const overflowRef = useRef<Array<HTMLElement>>([]);
   const lastFocus = useRef(null);
   const ro = useRef(null);
+  const [uuid] = useState((Date.now()).toString(36));
+  const { getChildrenVisibleState: setParentVisibleState, ...otherContext } = useContext(OverlayContext);
+
+  const childIDMap = useRef<Map<string, HTMLElement>>(new Map());
+
+  const handleOpen = (node: HTMLElement) => {
+    setParentVisibleState(uuid, node);
+    onOpen?.(node);
+  };
+  const handleClose = () => {
+    setParentVisibleState(uuid, null);
+    onClose?.();
+  }
+
+  const getChildrenVisibleState = (id: string, node: HTMLElement) => {
+    if (node) {
+      childIDMap.current.set(id, node);
+    } else {
+      childIDMap.current.delete(id);
+    }
+  }
 
   const child: ReactElement | undefined = React.Children.only(children);
   if (typeof (child as any).ref === 'string') {
@@ -223,9 +246,9 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
         }, waitTime);
       }
 
-      !cache && onOpen?.(node);
+      !cache && handleOpen(node);
     } else {
-      !cache && onClose?.();
+      !cache && handleClose();
       if (ro.current) {
         ro.current.disconnect();
         ro.current = null;
@@ -234,6 +257,14 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
   }, [container]);
 
   const clickEvent = (e: OverlayEvent) => {
+    // 点击在子元素上面，则忽略
+    for (let [, oNode] of childIDMap.current.entries()) {
+      const node = getHTMLElement(oNode);
+      if (node && (node === e.target || node.contains(e.target as Node))) {
+        return;
+      }
+    }
+
     if (!visible) {
       return;
     }
@@ -270,7 +301,10 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
 
   // 这里用 mousedown 而不是用 click。因为 click 是 mouseup 才触发。
   // 如果用 click 带来的问题: mousedown 在弹窗内部，然后按住鼠标不放拖动到弹窗外触发 mouseup 结果弹窗关了，这是不期望的展示。 https://github.com/alibaba-fusion/next/issues/742
-  useListener(document.body, 'mousedown', clickEvent, false, !!(visible && overlayRef.current && (canCloseByOutSideClick || (hasMask && canCloseByMask))));
+  // react 17 冒泡问题: 
+  //  - react17 中，如果弹窗 mousedown 阻止了 e.stopPropagation(), 那么 document 就不会监听到事件，因为事件冒泡到挂载节点 rootElement 就中断了。
+  //  - https://reactjs.org/blog/2020/08/10/react-v17-rc.html#changes-to-event-delegation
+  useListener(document as unknown as HTMLElement, 'mousedown', clickEvent, false, !!(visible && overlayRef.current && (canCloseByOutSideClick || (hasMask && canCloseByMask))));
 
   const keydownEvent = (e: OverlayEvent) => {
     if (!visible) {
@@ -281,7 +315,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
       onRequestClose(e);
     }
   }
-  useListener(document.body, 'keydown', keydownEvent, false, !!(visible && overlayRef.current && canCloseByEsc));
+  useListener(document as unknown as HTMLElement, 'keydown', keydownEvent, false, !!(visible && overlayRef.current && canCloseByEsc));
 
   const scrollEvent = (e: OverlayEvent) => {
     if (!visible) {
@@ -314,7 +348,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
 
   // 第一次加载并且 visible=false 的情况不挂载弹窗
   useEffect(() => {
-    if(!firstVisible && visible) {
+    if (!firstVisible && visible) {
       setFirst(true);
     }
   }, [visible]);
@@ -325,9 +359,9 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     if (cache && overlayNode) {
       if (visible) {
         updatePosition();
-        onOpen?.(overlayNode);
+        handleOpen(overlayNode);
       } else {
-        onClose?.();
+        handleClose();
       }
     }
   }, [visible, cache && overlayNode]);
@@ -342,7 +376,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
 
   // container 异步加载, 因为 container 很可能还没渲染完成，所以 visible 后这里异步设置下
   useEffect(() => {
-    if(visible) {
+    if (visible) {
       // 首次更新
       if (!container) {
         setContainer(getContainer());
@@ -363,6 +397,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
   const newChildren = child ? cloneElement(child, {
     ...others,
     ref: overlayRefCallback,
+    // onMouseDown: e=> {e.stopPropagation(); console.log(/overlay click/,e)},
     style: { top: 0, left: 0, ...child.props.style, ...positionStyleRef.current }
   }) : null;
 
@@ -374,14 +409,18 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
   const maskNode = <div className={maskClassName} style={maskStyle} ref={maskRef}></div>
 
   const content = (<div className={wrapperClassName} style={wrapperStyle} ref={ref}>
-    {hasMask? (maskRender? maskRender(maskNode): maskNode) : null}
+    {hasMask ? (maskRender ? maskRender(maskNode) : maskNode) : null}
     {newChildren}
   </div>);
 
-  return createPortal(
-    content,
-    container
-  );
+  return <OverlayContext.Provider
+    value={{
+      ...otherContext,
+      getChildrenVisibleState,
+    }}
+  >
+    {createPortal(content, container)}
+  </OverlayContext.Provider>
 });
 
 export default Overlay;
