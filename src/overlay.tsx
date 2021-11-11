@@ -274,6 +274,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     // 点击遮罩关闭
     if (hasMask && maskRef.current === e.target) {
       if (canCloseByMask) {
+        e.targetType = 'mask';
         onRequestClose(e);
       }
       return;
@@ -297,6 +298,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     }
 
     if (canCloseByOutSideClick) {
+      e.targetType = 'doc';
       onRequestClose(e);
     }
   }
@@ -314,6 +316,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     }
 
     if (e.keyCode === 27 && canCloseByEsc) {
+      e.targetType = 'esc';
       onRequestClose(e);
     }
   }

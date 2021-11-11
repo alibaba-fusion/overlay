@@ -290,7 +290,7 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
 
   const staticInfo = {
     targetInfo: { width: twidth, height: theight, left: tleft, top: ttop },
-    containerInfo: { left: cleft, top: ctop, scrollWidth: cwidth, scrollHeight: cheight, scrollTop: cscrollTop, scrollLeft: cscrollLeft },
+    containerInfo: { left: cleft, top: ctop, width: cwidth, height: cheight, scrollTop: cscrollTop, scrollLeft: cscrollLeft },
     overlayInfo: { width: owidth, height: oheight },
     points: opoints,
     placementOffset,
@@ -353,7 +353,7 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
   };
 
   /**
-   * step3: 滚动隐藏弹窗逻辑
+   * step3: 滚动隐藏弹窗逻辑。避免出现 target 已经滚动消失，弹层飘在页面最上方的情况。详细见 https://github.com/alibaba-fusion/overlay/issues/3
    * 触发条件: target 和 document.body 之间存在 overflow 滚动元素， target 进入不可见区域
    */
   if (autoHideScrollOverflow && placement && scrollNode?.length) {
