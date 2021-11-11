@@ -177,6 +177,8 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     } else {
       childIDMap.current.delete(id);
     }
+    // 让父级也感知
+    setParentVisibleState(id, node);
   }
 
   const child: ReactElement | undefined = React.Children.only(children);
@@ -257,7 +259,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
   }, [container]);
 
   const clickEvent = (e: OverlayEvent) => {
-    // 点击在子元素上面，则忽略
+    // 点击在子元素上面，则忽略。为了兼容 react16，这里用 contains 判断而不利用 e.stopPropagation() 阻止冒泡的特性来处理
     for (let [, oNode] of childIDMap.current.entries()) {
       const node = getHTMLElement(oNode);
       if (node && (node === e.target || node.contains(e.target as Node))) {

@@ -23,9 +23,19 @@ const style = {
 const Demo = () => {
     const [followTrigger, setFollowTrigger] = useState(false);
 
-    const overlay = (<div style={{...style}} >
+    const overlay2 = (<div style={{...style}} >
         <Popup 
             overlay={<div style={style}><p>挂载容器没有overflow:hidden, 依然超出容器展示，不会因为挂载容器小自动订正位置，viewport 任然为 body</p></div>}
+            followTrigger={followTrigger}
+        >
+            <button>Open third overlay</button>
+        </Popup>
+        <p>Hello World From First Overlay!</p>
+    </div>);
+
+    const overlay = (<div style={{...style}} >
+        <Popup 
+            overlay={overlay2}
             followTrigger={followTrigger}
         >
             <button>Open second overlay</button>
@@ -36,9 +46,7 @@ const Demo = () => {
     return (<div>
         followTrigger: <input type="checkbox" checked={followTrigger} onChange={e => setFollowTrigger(e.target.checked)}/>
         <br/><br/>
-        <Popup 
-            overlay={overlay}
-            >
+        <Popup overlay={overlay} >
             <button>Open first overlay</button>
         </Popup>
     </div>);

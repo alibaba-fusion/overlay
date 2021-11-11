@@ -1,6 +1,6 @@
 {
   "name": "@alifd/overlay",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "description": "overlay base component",
   "files": [
     "demo/",
