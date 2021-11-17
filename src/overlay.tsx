@@ -80,6 +80,7 @@ export interface OverlayProps {
    */
   autoFocus?: boolean;
   isAnimationEnd?: boolean;
+  rtl?: boolean;
 }
 
 
@@ -139,6 +140,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     autoAdjust,
     autoFocus = false,
     isAnimationEnd = true,
+    rtl,
     ...others
   } = props;
 

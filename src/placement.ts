@@ -58,6 +58,7 @@ export interface PlacementsConfig {
    */
   beforePosition?: (result: PositionResult, obj: any) => PositionResult;
   autoAdjust?: boolean;
+  rtl?: boolean;
 }
 
 export interface placementMapType {
@@ -257,7 +258,8 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
     position = 'absolute',
     beforePosition,
     autoAdjust = true,
-    autoHideScrollOverflow = true
+    autoHideScrollOverflow = true,
+    rtl,
   } = config;
 
   if (position === 'fixed') {
@@ -271,6 +273,15 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
   }
 
   let placement = oplacement;
+  
+  // rtl 左右对调
+  if (rtl && placement) {
+    if (placement.match(/l/)) {
+      placement = placement.replace('l', 'r') as placementType;
+    } else if(placement.match(/r/)) {
+      placement = placement.replace('r', 'l') as placementType;
+    }
+  }
 
   /**
    * 可视窗口是浏览器给用户展示的窗口
