@@ -207,7 +207,8 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
       placement,
       placementOffset,
       beforePosition,
-      autoAdjust
+      autoAdjust,
+      rtl
     });
 
     positionStyleRef.current = placements.style;
