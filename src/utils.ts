@@ -352,16 +352,19 @@ export function getFocusNodeList(node: HTMLElement) {
     return res;
 }
 
-function isHTMLElement(obj: any) {
-    if (obj.nodeType) {
-        return obj.nodeType === 1;
-    }
-    return false;
-}
-
-export function getHTMLElement(node: any) {
-    if (node && !isHTMLElement(node)) {
-        return findDOMNode(node);
+export function getHTMLElement(node:any) {
+    if (node) {
+        if (node.nodeType) {
+            if (node.nodeType === 1) {
+                return node;
+            } else {
+                return document.body;
+            }
+        } else if (node === window) {
+            return document.body;
+        } else {
+            return findDOMNode(node);
+        }
     }
     return node;
 }
