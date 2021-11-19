@@ -35,7 +35,7 @@ export interface PopupProps {
   /**
    * 弹层显示或隐藏时触发的回调函数
    */
-  onVisibleChange?: (visible: boolean, e: OverlayEvent) => void;
+  onVisibleChange?: (visible: boolean, trigger: string, e: OverlayEvent) => void;
   cache?: boolean;
   onOpen?: Function;
 
@@ -107,29 +107,27 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     }
   }, [props.visible]);
 
-  const handleVisibleChange = (visible: boolean, e: OverlayEvent) => {
+  const handleVisibleChange = (visible: boolean, e: OverlayEvent, triggerType: string = 'fromTrigger') => {
     if (!('visible' in props)) {
       if (visible || overlayRef.current) {
         setVisible(visible);
       }
     }
 
-    onVisibleChange(visible, e);
+    onVisibleChange(visible, triggerType, e);
   }
 
   const handleClick = (e: OverlayEvent) => {
-    e.targetType = 'trigger';
     if (visible && !canCloseByTrigger) {
       return;
     }
-    handleVisibleChange(!visible, e);
+    handleVisibleChange(!visible, e); // todo: rename to trigger in 1.x
   }
 
   const handleKeyDown = (e: OverlayEvent) => {
     const keycodes = Array.isArray(triggerClickKeyCode) ? triggerClickKeyCode : [triggerClickKeyCode];
     if (keycodes.includes(e.keyCode)) {
-      e.targetType = 'trigger';
-      handleVisibleChange(!visible, e);
+      handleVisibleChange(!visible, e); // todo: rename to trigger in 1.x
     }
   }
 
@@ -143,8 +141,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
 
       if (!mouseEnterTimer.current && !visible) {
         mouseEnterTimer.current = setTimeout(() => {
-          e.targetType = targetType;
-          handleVisibleChange(true, e);
+          handleVisibleChange(true, e, targetType);
           mouseEnterTimer.current = null;
         }, delay);
       }
@@ -155,8 +152,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     return (e: OverlayEvent) => {
       if (!mouseLeaveTimer.current && visible) {
         mouseLeaveTimer.current = setTimeout(() => {
-          e.targetType = targetType;
-          handleVisibleChange(false, e);
+          handleVisibleChange(false, e, targetType);
           mouseLeaveTimer.current = null;
         }, delay);
       }
@@ -169,7 +165,6 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
   }
 
   const handleFocus = (e: OverlayEvent) => {
-    e.targetType = 'trigger';
     handleVisibleChange(true, e);
   }
   const handleBlur = (e: OverlayEvent) => {
@@ -177,7 +172,6 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
       overlayClick.current = false;
       return;
     }
-    e.targetType = 'trigger';
     handleVisibleChange(false, e);
   }
 
@@ -219,8 +213,8 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     ref: useCallback(makeChain(saveRef(overlayRef), saveRef(ref), saveRef((overlayChild as any).ref)), [])
   });
 
-  const handleRequestClose = (e: OverlayEvent) => {
-    handleVisibleChange(false, e);
+  const handleRequestClose = (targetType: string, e: OverlayEvent) => {
+    handleVisibleChange(false, e, targetType);
   }
 
   const getContainer = typeof container === 'string' ? () => document.getElementById(container) :
