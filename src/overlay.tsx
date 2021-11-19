@@ -8,7 +8,6 @@ import OverlayContext from './overlay-context';
 
 export interface OverlayEvent extends MouseEvent, KeyboardEvent {
   target: EventTarget | null;
-  targetType: string;
 }
 
 export interface OverlayProps {
@@ -40,7 +39,7 @@ export interface OverlayProps {
    * 是否显示
    */
   visible?: boolean;
-  onRequestClose?: (event: OverlayEvent) => void;
+  onRequestClose?: (targetType: string, event: OverlayEvent) => void;
   cache?: boolean;
   /**
    * 弹窗打开后的回调（此时弹窗挂载成功)
@@ -280,8 +279,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     // 点击遮罩关闭
     if (hasMask && maskRef.current === e.target) {
       if (canCloseByMask) {
-        e.targetType = 'mask';
-        onRequestClose(e);
+        onRequestClose('mask', e);
       }
       return;
     }
@@ -304,8 +302,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     }
 
     if (canCloseByOutSideClick) {
-      e.targetType = 'doc';
-      onRequestClose(e);
+      onRequestClose('doc', e);
     }
   }
 
@@ -322,8 +319,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     }
 
     if (e.keyCode === 27 && canCloseByEsc) {
-      e.targetType = 'esc';
-      onRequestClose(e);
+      onRequestClose('esc', e);
     }
   }
   useListener(document as unknown as HTMLElement, 'keydown', keydownEvent, false, !!(visible && overlayRef.current && canCloseByEsc));
