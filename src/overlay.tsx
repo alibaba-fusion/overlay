@@ -279,7 +279,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     // 点击遮罩关闭
     if (hasMask && maskRef.current === e.target) {
       if (canCloseByMask) {
-        onRequestClose('mask', e);
+        onRequestClose('maskClick', e); // will rename to `mask` in 1.0
       }
       return;
     }
@@ -302,7 +302,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     }
 
     if (canCloseByOutSideClick) {
-      onRequestClose('doc', e);
+      onRequestClose('docClick', e); // will rename to `doc` in 1.0
     }
   }
 
