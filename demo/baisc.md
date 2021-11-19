@@ -39,8 +39,7 @@ class Demo extends React.Component {
                 </button>
                 <Overlay 
                     visible={this.state.visible}
-                    cache
-                    points={['lt', 'tr']}
+                    points={['tl', 'tr']}
                     offset={[4, 0]}
                     target={() => this.btn}
                     safeNode={() => this.btn}
@@ -57,8 +56,8 @@ class Demo extends React.Component {
                     }} />
                 </Overlay>
 
-                                <div id="dialog-popupcontainer" style={{ height: 300, overflow: 'auto' }}>
-<Overlay title="Welcome to Alibaba.com" visible container={() => document.getElementById("dialog-popupcontainer")}>
+                <div id="dialog-popupcontainer" style={{ height: 300, overflow: 'auto' }}>
+                    <Overlay title="Welcome to Alibaba.com" visible container={() => document.getElementById("dialog-popupcontainer")}>
                        <span> Start your business here by searching a popular product</span>
                     </Overlay>
                 </div>

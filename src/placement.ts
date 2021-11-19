@@ -100,7 +100,7 @@ export interface PositionResult {
 }
 
 function getXY(p: placementType | undefined, staticInfo: any) {
-  const { targetInfo, containerInfo, overlayInfo, points: opoints, placementOffset, offset } = staticInfo;
+  const { targetInfo, containerInfo, overlayInfo, points: opoints, placementOffset, offset, rtl } = staticInfo;
   let basex = targetInfo.left - containerInfo.left + containerInfo.scrollLeft;
   let basey = targetInfo.top - containerInfo.top + containerInfo.scrollTop;
 
@@ -134,9 +134,23 @@ function getXY(p: placementType | undefined, staticInfo: any) {
     }
   }
 
-  let points = opoints;
+  let points = [...opoints];
   if (p && p in placementMap) {
     points = placementMap[p];
+  }
+
+   // rtl 左右对调
+   if (rtl) {
+    if (points[0].match(/l/)) {
+      points[0] = points[0].replace('l', 'r') as placementType;
+    } else if(points[0].match(/r/)) {
+      points[0] = points[0].replace('r', 'l') as placementType;
+    }
+    if (points[1].match(/l/)) {
+      points[1] = points[1].replace('l', 'r') as placementType;
+    } else if(points[1].match(/r/)) {
+      points[1] = points[1].replace('r', 'l') as placementType;
+    }
   }
 
   // 目标元素
@@ -273,15 +287,6 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
   }
 
   let placement = oplacement;
-  
-  // rtl 左右对调
-  if (rtl && placement) {
-    if (placement.match(/l/)) {
-      placement = placement.replace('l', 'r') as placementType;
-    } else if(placement.match(/r/)) {
-      placement = placement.replace('r', 'l') as placementType;
-    }
-  }
 
   /**
    * 可视窗口是浏览器给用户展示的窗口
@@ -307,6 +312,7 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
     placementOffset,
     offset,
     container,
+    rtl
   };
 
   // step1: 根据 placement 计算位置
