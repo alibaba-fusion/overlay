@@ -193,8 +193,8 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
         triggerProps.onKeyDown = makeChain(handleKeyDown, child?.props?.onKeyDown);
         break;
       case 'hover':
-        triggerProps.onMouseEnter = makeChain(handleMouseEnter('trigger'), child?.props?.onMouseEnter);
-        triggerProps.onMouseLeave = makeChain(handleMouseLeave('trigger'), child?.props?.onMouseLeave);
+        triggerProps.onMouseEnter = makeChain(handleMouseEnter('fromTrigger'), child?.props?.onMouseEnter);
+        triggerProps.onMouseLeave = makeChain(handleMouseLeave('fromTrigger'), child?.props?.onMouseLeave);
         overlayOtherProps.onMouseEnter = makeChain(handleMouseEnter('overlay'), overlayProps.onMouseEnter);
         overlayOtherProps.onMouseLeave = makeChain(handleMouseLeave('overlay'), overlayProps.onMouseLeave);
         break;
