@@ -437,4 +437,23 @@ describe('Popup', () => {
     // jest 环境无法精确模拟
     // expect(document.querySelector('.next-overlay-inner').style.left).toBe('10px');
   });
+
+  it('should support Functional component', async () => {
+    const ref = jest.fn();
+
+    const FunctionalButton = (props) => <button {...props}>Open</button>;
+    const FunctionalOverlay = () => <div style={style} id="content" className="content">Hello World From Popup!</div>;
+    const wrapper = mount(<Popup overlay={<FunctionalOverlay/>} ref={ref}>
+      <FunctionalButton />
+    </Popup>);
+
+    expect(wrapper.find('.content').length).toBe(0);
+    expect(wrapper.find('button').length).toBe(1);
+
+    wrapper.find('button').simulate('click');
+    wrapper.update();
+
+    expect(wrapper.find('.content').length).toBe(1);
+    expect(ref).toBeCalledTimes(1);
+  });
 })

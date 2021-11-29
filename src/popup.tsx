@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { findDOMNode } from 'react-dom';
 import { CSSProperties, ReactElement } from 'react';
 
-import Overlay, { OverlayEvent } from './overlay';
+import Overlay, { OverlayEvent, RefWrapper } from './overlay';
 import { placementType } from './placement';
 import { getHTMLElement, makeChain, saveRef } from './utils';
 
@@ -181,7 +182,6 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
   }
 
   const triggerProps: any = {
-    ref: useCallback(makeChain(saveRef(triggerRef), saveRef((child as any).ref)), [])
   };
   const overlayOtherProps: any = {}
 
@@ -209,10 +209,6 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
   const safeNodes = Array.isArray(safeNode) ? safeNode : (typeof safeNode === 'function' ? [safeNode] : []);
   safeNodes.push(() => triggerRef.current);
 
-  const newOverlay = React.cloneElement(overlayChild, {
-    ref: useCallback(makeChain(saveRef(overlayRef), saveRef(ref), saveRef((overlayChild as any).ref)), [])
-  });
-
   const handleRequestClose = (targetType: string, e: OverlayEvent) => {
     handleVisibleChange(false, e, targetType);
   }
@@ -221,8 +217,10 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     typeof container !== 'function' ? () => container : () => container(getHTMLElement(triggerRef.current));
   const overlayContainer = followTrigger ? () => getHTMLElement(triggerRef.current)?.parentNode : getContainer;
 
+  const saveTrigger = useCallback(ref => triggerRef.current = findDOMNode(ref), []);
+
   return <>
-    {child && React.cloneElement(child, triggerProps)}
+    {child && <RefWrapper ref={saveTrigger}>{React.cloneElement(child, triggerProps)}</RefWrapper>}
     <Overlay
       {...others}
       {...overlayOtherProps}
@@ -232,8 +230,9 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
       visible={visible}
       target={() => triggerRef.current}
       onRequestClose={handleRequestClose}
+      ref={useCallback(makeChain(saveRef(overlayRef), saveRef(ref)), [])}
     >
-      {newOverlay}
+      {overlayChild}
     </Overlay>
   </>
 });

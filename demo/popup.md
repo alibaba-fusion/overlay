@@ -20,18 +20,20 @@ const style = {
     boxShadow: '2px 2px 20px rgba(0, 0, 0, 0.15)'
 }
 
-const overlay = <span style={style} >
+const FunctionalOverlay = (props) => <span {...props} style={style}>
     Hello World From Popup!
 </span>;
 
+const FunctionalButton = (props) => <button style={{border: '4px solid'}} {...props}>Open</button>
+
 ReactDOM.render(
     <div>
-        <Popup overlay={overlay} triggerType="click">
-            <button style={{border: '4px solid'}}>Open</button>
+        <Popup overlay={<FunctionalOverlay/>} triggerType="click">
+            <FunctionalButton />
         </Popup>
         <br />
         <br />
-        <Popup overlay={overlay} triggerType="click" triggerClickKeyCode={40}>
+        <Popup overlay={<FunctionalOverlay/>} triggerType="click" triggerClickKeyCode={40}>
             <input placeholder="Use Down Arrow to open" />
         </Popup>
     </div>,
