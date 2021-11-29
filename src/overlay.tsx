@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef, cloneElement, useContext } from 'react';
 import { CSSProperties, ReactElement } from 'react';
+import { findDOMNode } from 'react-dom';
 import ResizeObserver from 'resize-observer-polyfill';
 import { createPortal } from 'react-dom';
 import getPlacements, { pointsType, placementType, PositionResult, TargetRect } from './placement';
@@ -104,6 +105,15 @@ const hasScroll = (containerNode: HTMLElement) => {
     isScrollDisplay(containerNode)
   );
 };
+
+/**
+ * 传入的组件可能是没有 forwardRef 包裹的 Functional Component, 会导致取不到 ref
+ */
+ export class RefWrapper extends React.Component {
+  render() {
+    return this.props.children;
+  }
+}
 
 const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
   const body = () => document.body;
@@ -217,9 +227,9 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
 
   // 弹窗挂载
   const overlayRefCallback = useCallback((nodeRef) => {
-    const node = getHTMLElement(nodeRef);
+    const node = findDOMNode(nodeRef) as HTMLElement;
     overlayRef.current = node;
-    callRef((child as any).ref, node);
+    callRef(ref, node);
 
     if (node !== null && container) {
       const containerNode = getRelativeContainer(getHTMLElement(container));
@@ -401,12 +411,11 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     return null;
   }
 
-  const newChildren = child ? cloneElement(child, {
+  const newChildren = child ? <RefWrapper ref={overlayRefCallback}>{cloneElement(child, {
     ...others,
-    ref: overlayRefCallback,
     // onMouseDown: e=> {e.stopPropagation(); console.log(/overlay click/,e)},
     style: { top: 0, left: 0, ...child.props.style, ...positionStyleRef.current }
-  }) : null;
+  })}</RefWrapper> : null;
 
   const wrapperStyle: any = {};
   if (cache && !visible && isAnimationEnd) {
@@ -415,7 +424,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
 
   const maskNode = <div className={maskClassName} style={maskStyle} ref={maskRef}></div>
 
-  const content = (<div className={wrapperClassName} style={wrapperStyle} ref={ref}>
+  const content = (<div className={wrapperClassName} style={wrapperStyle}>
     {hasMask ? (maskRender ? maskRender(maskNode) : maskNode) : null}
     {newChildren}
   </div>);
