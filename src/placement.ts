@@ -139,16 +139,16 @@ function getXY(p: placementType | undefined, staticInfo: any) {
     points = placementMap[p];
   }
 
-   // rtl 左右对调
-   if (rtl) {
+  // rtl 左右对调
+  if (rtl) {
     if (points[0].match(/l/)) {
       points[0] = points[0].replace('l', 'r') as placementType;
-    } else if(points[0].match(/r/)) {
+    } else if (points[0].match(/r/)) {
       points[0] = points[0].replace('r', 'l') as placementType;
     }
     if (points[1].match(/l/)) {
       points[1] = points[1].replace('l', 'r') as placementType;
-    } else if(points[1].match(/r/)) {
+    } else if (points[1].match(/r/)) {
       points[1] = points[1].replace('r', 'l') as placementType;
     }
   }
@@ -276,16 +276,6 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
     rtl,
   } = config;
 
-  if (position === 'fixed') {
-    return {
-      style: {
-        position,
-        left: offset[0],
-        top: offset[1],
-      }
-    }
-  }
-
   let placement = oplacement;
 
   /**
@@ -299,10 +289,35 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
    * scrollTop: 容器上下滚动距离
    * scrollLeft: 容器左右滚动距离
    */
+   const { width: owidth, height: oheight } = getWidthHeight(overlay);
+   if (position === 'fixed') {
+    const result = <PositionResult>{
+      config: {
+        placement: undefined,
+        points: undefined,
+      },
+      style: {
+        position,
+        left: offset[0],
+        top: offset[1],
+      }
+    };
+
+    if (beforePosition && typeof beforePosition) {
+      return beforePosition(result, {
+        overlay: {
+          node: overlay,
+          width: owidth, height: oheight
+        }
+      });
+    }
+
+    return result;
+  }
+
   const { width: twidth, height: theight, left: tleft, top: ttop } = target.getBoundingClientRect();
   const { left: cleft, top: ctop } = getViewTopLeft(container);
   const { scrollWidth: cwidth, scrollHeight: cheight, scrollTop: cscrollTop, scrollLeft: cscrollLeft } = container;
-  const { width: owidth, height: oheight } = getWidthHeight(overlay);
 
   const staticInfo = {
     targetInfo: { width: twidth, height: theight, left: tleft, top: ttop },

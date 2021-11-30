@@ -92,6 +92,19 @@ describe('Overlay', () => {
     expect(wrapper.find('.content').length).toBe(1);
   });
 
+  it('should support wrapperStyle & wrapperClassname', async () => {
+    const wrapper = mount(<Overlay
+      visible
+      wrapperClassName="wrapper"
+      wrapperStyle={{left: 1}}
+    >
+      <div style={style} className="content" />
+    </Overlay>);
+
+    expect(wrapper.find('.wrapper').length).toBe(1);
+    expect(wrapper.find('.wrapper').getDOMNode().style.left).toBe('1px');
+  });
+
   it('should support rendering overlay and mask', async () => {
     wrapper = mount(
       <Overlay

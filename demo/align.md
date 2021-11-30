@@ -15,13 +15,12 @@ const style = {
     height: 150,
     margin: 50,
     border: '1px solid #eee',
-    overflow: 'auto',
     textAlign: 'center',
 }
 
 ReactDOM.render(
-    <div id="containerId" className="overlay-container">
-        <Overlay target="containerId" visible points={["br", "tl"]}><button>br tl</button></Overlay>
+    <div id="containerId" style={style}>
+        <Overlay target="containerId" container={() => document.getElementById("containerId")} visible points={["br", "tl"]}><button>br tl</button></Overlay>
         <Overlay target="containerId" visible points={["tc", "tc"]}><button>tc tc</button></Overlay>
         <Overlay target="containerId" visible points={["bl", "tr"]}><button>bl tr</button></Overlay>
         <Overlay target="containerId" visible points={["cr", "cr"]}><button>cr cr</button></Overlay>
@@ -32,15 +31,4 @@ ReactDOM.render(
         <Overlay target="containerId" visible points={["cc", "cc"]}><button>cc cc</button></Overlay>
     </div>
   , mountNode);
-```
-
-```css
-.overlay-container {
-    position: relative;
-    height: 150px;
-    margin: 50px;
-    border: 1px solid #eee;
-    overflow: auto;
-    text-align: center;
-}
 ```

@@ -219,7 +219,8 @@ export function debounce(func: Function, wait: number) {
  */
 export function getViewTopLeft(node: HTMLElement) {
     /**
-     * documentElement
+     * document.body 向下滚动后 scrollTop 一直为0，同时 top=-xx 为负数，相当于本身是没有滚动条的，这个逻辑是正确的。
+     * document.documentElement 向下滚动后 scrollTop/top 都在变化，会影响计算逻辑，所以这里写死 0
      */
     if (node === document.documentElement) {
         return {

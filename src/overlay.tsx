@@ -53,7 +53,10 @@ export interface OverlayProps {
 
   hasMask?: boolean; // 仅仅为了兼容
   canCloseByMask?: boolean; // 仅仅为了兼容
-  disableScroll?: boolean; // 仅仅为了兼容
+  /**
+   * 是否禁止滚动
+   */
+  disableScroll?: boolean;
 
   canCloseByOutSideClick?: boolean;
   canCloseByEsc?: boolean;
@@ -109,7 +112,7 @@ const hasScroll = (containerNode: HTMLElement) => {
 /**
  * 传入的组件可能是没有 forwardRef 包裹的 Functional Component, 会导致取不到 ref
  */
- export class RefWrapper extends React.Component {
+export class RefWrapper extends React.Component {
   render() {
     return this.props.children;
   }
@@ -136,7 +139,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     container: popupContainer = body,
     placement,
     placementOffset,
-    disableScroll = true,
+    disableScroll = false,
     canCloseByOutSideClick = true,
     canCloseByEsc = true,
     safeNode,
@@ -150,6 +153,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     autoFocus = false,
     isAnimationEnd = true,
     rtl,
+    wrapperStyle: owrapperStyle,
     ...others
   } = props;
 
@@ -344,9 +348,9 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
 
   // 有弹窗情况下在 body 增加 overflow:hidden，两个弹窗同时存在也没问题，会按照堆的方式依次 pop
   useEffect(() => {
-    if (visible && hasMask) {
+    if (visible && disableScroll) {
       const originStyle = document.body.getAttribute('style');
-      disableScroll && setStyle(document.body, 'overflow', 'hidden');
+      setStyle(document.body, 'overflow', 'hidden');
 
       if (hasScroll(document.body)) {
         const scrollWidth = getScrollbarWidth();
@@ -361,7 +365,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     }
 
     return undefined;
-  }, [visible && hasMask]);
+  }, [visible && disableScroll]);
 
   // 第一次加载并且 visible=false 的情况不挂载弹窗
   useEffect(() => {
@@ -413,11 +417,10 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
 
   const newChildren = child ? <RefWrapper ref={overlayRefCallback}>{cloneElement(child, {
     ...others,
-    // onMouseDown: e=> {e.stopPropagation(); console.log(/overlay click/,e)},
     style: { top: 0, left: 0, ...child.props.style, ...positionStyleRef.current }
   })}</RefWrapper> : null;
 
-  const wrapperStyle: any = {};
+  const wrapperStyle = {...owrapperStyle};
   if (cache && !visible && isAnimationEnd) {
     wrapperStyle.display = 'none';
   }
