@@ -289,12 +289,8 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
    * scrollTop: 容器上下滚动距离
    * scrollLeft: 容器左右滚动距离
    */
-  const { width: twidth, height: theight, left: tleft, top: ttop } = target.getBoundingClientRect();
-  const { left: cleft, top: ctop } = getViewTopLeft(container);
-  const { scrollWidth: cwidth, scrollHeight: cheight, scrollTop: cscrollTop, scrollLeft: cscrollLeft } = container;
-  const { width: owidth, height: oheight } = getWidthHeight(overlay);
-
-  if (position === 'fixed') {
+   const { width: owidth, height: oheight } = getWidthHeight(overlay);
+   if (position === 'fixed') {
     const result = <PositionResult>{
       config: {
         placement: undefined,
@@ -306,13 +302,9 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
         top: offset[1],
       }
     };
-    
+
     if (beforePosition && typeof beforePosition) {
       return beforePosition(result, {
-        target: {
-          node: target,
-          width: twidth, height: theight, left: tleft, top: ttop
-        },
         overlay: {
           node: overlay,
           width: owidth, height: oheight
@@ -322,6 +314,10 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
 
     return result;
   }
+
+  const { width: twidth, height: theight, left: tleft, top: ttop } = target.getBoundingClientRect();
+  const { left: cleft, top: ctop } = getViewTopLeft(container);
+  const { scrollWidth: cwidth, scrollHeight: cheight, scrollTop: cscrollTop, scrollLeft: cscrollLeft } = container;
 
   const staticInfo = {
     targetInfo: { width: twidth, height: theight, left: tleft, top: ttop },
