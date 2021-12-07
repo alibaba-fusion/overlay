@@ -21,8 +21,8 @@ const style = {
 
 const DemoOverlay = React.forwardRef((props, ref) => {
     return <span {...props} style={{...style, ...props.style}} ref={ref}>
-    Hello World From Popup!
-</span>
+        Hello World From Popup!
+    </span>
 })
 
 class Demo extends React.Component {
@@ -30,7 +30,8 @@ class Demo extends React.Component {
         super(props);
 
         this.state = {
-            visible: false
+            visible: false,
+            visible3: false,
         };
     }
 
@@ -61,19 +62,12 @@ class Demo extends React.Component {
                 <br />
                 <div>
                     <Popup 
-                        overlay={<DemoOverlay ref={ref => {
-                            console.log(/overlay1/);
-                            this.overlay1 = ref
-                            }}
-                        />}
+                        overlay={<DemoOverlay ref={ref => { this.overlay1 = ref }} />}
                         triggerType="click"
                         visible={this.state.groupVisible}
                         safeNode={[() => this.btn2, () => this.overlay2]}
                         onVisibleChange={this.onGroupVisibleChange}>
-                        <button style={{"marginRight": "50px"}} ref={ref => {
-                            this.btn1 = ref;
-                            console.log(/btn1/, this.btn1);
-                        }}>Paired Popup 1</button>
+                        <button style={{"marginRight": "50px"}} ref={ref => { this.btn1 = ref; }}>Paired Popup 1</button>
                     </Popup>
                     <Popup 
                         overlay={<DemoOverlay ref={ref => {this.overlay2 = ref}}/>}
@@ -83,6 +77,19 @@ class Demo extends React.Component {
                         onVisibleChange={this.onGroupVisibleChange}>
                         <button ref={ref => {this.btn2 = ref;}}>Paired Popup 2</button>
                     </Popup>
+                </div>
+                <br/>
+                <div>
+                    <Popup 
+                        target={() => this.divref}
+                        overlay={<DemoOverlay />}
+                        visible={this.state.visible3}
+                        safeNode={()=>this.btn3}
+                        onVisibleChange={(visible) => this.setState({visible3: visible})}>
+                    </Popup>
+
+                    <button onClick={() => this.setState({visible3: true})} ref={ref => {this.btn3 = ref;}}>target</button>
+                    <div ref={ref => this.divref = ref } style={{width: 20, height: 20, background: 'blue', display: 'inline-block', marginLeft: 100}}/>
                 </div>
             </div>
         );
