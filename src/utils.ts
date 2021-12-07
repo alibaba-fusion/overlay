@@ -369,3 +369,14 @@ export function getHTMLElement(node:any) {
     }
     return node;
 }
+
+export function getTargetNode(target: any) {
+    if (typeof target === 'function') {
+        return target();
+    } else if (typeof target === 'string') {
+        return document.getElementById(target);
+    }
+
+    // 兼容 target = HTMLElement
+    return target;
+}

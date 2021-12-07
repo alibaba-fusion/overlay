@@ -4,7 +4,7 @@ import { findDOMNode } from 'react-dom';
 import ResizeObserver from 'resize-observer-polyfill';
 import { createPortal } from 'react-dom';
 import getPlacements, { pointsType, placementType, PositionResult, TargetRect } from './placement';
-import { useListener, getHTMLElement, getStyle, setStyle, getRelativeContainer, throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList } from './utils';
+import { useListener, getHTMLElement, getTargetNode, getStyle, setStyle, getRelativeContainer, throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList } from './utils';
 import OverlayContext from './overlay-context';
 
 export interface OverlayEvent extends MouseEvent, KeyboardEvent {
@@ -85,7 +85,6 @@ export interface OverlayProps {
   isAnimationEnd?: boolean;
   rtl?: boolean;
 }
-
 
 const isScrollDisplay = function (element: HTMLElement) {
   try {
@@ -239,9 +238,8 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
       const containerNode = getRelativeContainer(getHTMLElement(container));
       containerRef.current = containerNode;
 
-      let taretElement = target && target !== 'viewport' ? (typeof target === 'string' ? () => document.getElementById(target) : target)() :
-        (hasMask ? maskRef.current : body());
-      const targetNode = getHTMLElement(taretElement);
+      let targetElement = target === 'viewport'? (hasMask ? maskRef.current : body()) : (getTargetNode(target) || body());
+      const targetNode = getHTMLElement(targetElement);
       targetRef.current = targetNode;
 
       overflowRef.current = getOverflowNodes(targetNode, containerNode);
@@ -307,7 +305,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
 
     // 安全节点不关闭
     for (let i = 0; i < safeNodeList.length; i++) {
-      const safeNode = typeof safeNodeList[i] === 'function' ? safeNodeList[i]() : null;
+      const safeNode = getTargetNode(safeNodeList[i]);
       const node = getHTMLElement(safeNode);
 
       if (node && (node === e.target || node.contains(e.target as Node))) {
@@ -420,7 +418,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     style: { top: 0, left: 0, ...child.props.style, ...positionStyleRef.current }
   })}</RefWrapper> : null;
 
-  const wrapperStyle = {...owrapperStyle};
+  const wrapperStyle = { ...owrapperStyle };
   if (cache && !visible && isAnimationEnd) {
     wrapperStyle.display = 'none';
   }

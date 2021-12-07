@@ -62,6 +62,10 @@ export interface PopupProps {
   followTrigger?: boolean;
   canCloseByEsc?: boolean;
   canCloseByTrigger?: boolean;
+  /**
+   * 和 trigger 互斥使用
+   */
+  target?: (() => HTMLElement) | string;
 }
 
 const Popup = React.forwardRef((props: PopupProps, ref) => {
@@ -82,6 +86,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     overlayProps = {},
     safeNode,
     followTrigger = false,
+    target: otarget,
     ...others
   } = props;
 
@@ -92,15 +97,8 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
   const mouseEnterTimer: any = useRef(null);
   const overlayClick = useRef(false);
 
-  const child: ReactElement | undefined = React.Children.only(children);
-  if (typeof (child as any).ref === 'string') {
-    throw new Error('Can not set ref by string in Overlay, use function instead.');
-  }
-
+  const child: ReactElement | undefined = children && React.Children.only(children);
   const overlayChild: ReactElement | undefined = React.Children.only(overlay);
-  if (typeof (overlayChild as any).ref === 'string') {
-    throw new Error('Can not set ref by string in Overlay, use function instead.');
-  }
 
   useEffect(() => {
     if ('visible' in props) {
@@ -217,10 +215,12 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     typeof container !== 'function' ? () => container : () => container(getHTMLElement(triggerRef.current));
   const overlayContainer = followTrigger ? () => getHTMLElement(triggerRef.current)?.parentNode : getContainer;
 
-  const saveTrigger = useCallback(ref => triggerRef.current = findDOMNode(ref), []);
+  const target = child ? () => triggerRef.current : otarget;
 
   return <>
-    {child && <RefWrapper ref={saveTrigger}>{React.cloneElement(child, triggerProps)}</RefWrapper>}
+    {child && <RefWrapper ref={useCallback(ref => triggerRef.current = findDOMNode(ref), [])}>
+      {React.cloneElement(child, triggerProps)}
+    </RefWrapper>}
     <Overlay
       {...others}
       {...overlayOtherProps}
@@ -228,7 +228,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
       container={overlayContainer}
       safeNode={safeNodes}
       visible={visible}
-      target={() => triggerRef.current}
+      target={target}
       onRequestClose={handleRequestClose}
       ref={useCallback(makeChain(saveRef(overlayRef), saveRef(ref)), [])}
     >
