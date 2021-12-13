@@ -204,7 +204,7 @@ describe('Popup', () => {
     expect(ref).toBeCalledTimes(1);
   });
 
-  it('should support target without children', async () => {
+  it('should support target without children(trigger)', async () => {
     const Demo = () => {
       const [visible, setVisible] = useState(false);
       const divref = useRef(null);
@@ -228,5 +228,49 @@ describe('Popup', () => {
     wrapper.update();
 
     expect(wrapper.find('.content-nochildren').length).toBe(1);
+  });
+
+
+  // 测试环境不支持真实的 dom 渲染，所以 placement 计算没有被调用到
+  it.skip('should support dynamic triggger DOM', async (done) => {
+    const DyncButton = (props) => {
+      const [disabled, setDisabled] = useState(false);
+    
+      useEffect(() => {
+        setTimeout(() => {
+          act(() => {
+            setDisabled(false);
+          });
+        }, 100);
+      }, []);
+    
+      if (disabled) {
+          return <span className="button">
+              <button {...props} disabled style={{width: 80, height: 20}}>Disabled button</button>
+          </span>
+      }
+      
+      return <button {...props} className="button" style={{width: 80, height: 20}}>Open</button>
+    };
+
+    const beforePosition = (result, info) => {
+      expect(info.target).toBe(1);
+      done()
+
+      return result;
+    }
+
+    wrapper = render(<Popup 
+      overlay={<div style={style} id="content" className="content">Hello World From Popup!</div>}
+      triggerType="click"
+      beforePosition={beforePosition}
+    >
+      <DyncButton />
+    </Popup>);
+    
+    expect(wrapper.find('.content').length).toBe(0);
+
+    wrapper.find('button').simulate('click');
+    wrapper.update();
   });
 })
