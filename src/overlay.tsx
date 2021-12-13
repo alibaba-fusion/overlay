@@ -296,7 +296,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
       return;
     }
 
-    const safeNodeList = Array.isArray(safeNode) ? safeNode : (typeof safeNode === 'function' ? [safeNode] : []);
+    const safeNodeList = Array.isArray(safeNode) ? safeNode : [safeNode];
 
     // 弹层默认是安全节点
     if (overlayRef.current) {
