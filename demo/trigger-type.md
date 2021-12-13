@@ -38,6 +38,11 @@ ReactDOM.render(
         <Popup overlay={overlay('focus')} triggerType="focus">
             <button style={{marginLeft: 16}}>focus</button>
         </Popup>
+
+        <br/><br/>
+        <Popup overlay={overlay('hover')} triggerType="hover">
+            <span><button disabled style={{pointerEvents: 'none'}}>disabled hover</button></span>
+        </Popup>
     </div>
     , mountNode);
 ```
