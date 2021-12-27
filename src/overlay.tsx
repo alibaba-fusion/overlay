@@ -244,8 +244,9 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
 
       overflowRef.current = getOverflowNodes(targetNode, containerNode);
 
-      // 这里提前先设置好 position 属性，因为有的节点可能会因为设置了 position 属性导致宽度变小
-      setStyle(node, { position: fixed ? 'fixed' : 'absolute' });
+      // 1. 这里提前先设置好 position 属性，因为有的节点可能会因为设置了 position 属性导致宽度变小
+      // 2. 提前设置 top/left -1000 先把弹窗藏起来，以免影响了 container 的高度计算
+      setStyle(node, { position: fixed ? 'fixed' : 'absolute', top: -1000, left: -1000 });
 
       const waitTime = 100;
       ro.current = new ResizeObserver(throttle(updatePosition.bind(this), waitTime));
