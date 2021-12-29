@@ -331,7 +331,8 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
       return;
     }
 
-    if (e.keyCode === 27 && canCloseByEsc) {
+    // 无子元素才能 esc 取消关闭
+    if (e.keyCode === 27 && canCloseByEsc && !childIDMap.current.size) {
       onRequestClose('esc', e);
     }
   }
