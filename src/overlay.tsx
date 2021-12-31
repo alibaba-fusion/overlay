@@ -172,27 +172,26 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
   const lastFocus = useRef(null);
   const ro = useRef(null);
   const [uuid] = useState((Date.now()).toString(36));
-  const { getChildrenVisibleState: setParentVisibleState, ...otherContext } = useContext(OverlayContext);
-
+  const { setVisibleOverlayToParent, ...otherContext } = useContext(OverlayContext);
   const childIDMap = useRef<Map<string, HTMLElement>>(new Map());
 
   const handleOpen = (node: HTMLElement) => {
-    setParentVisibleState(uuid, node);
+    setVisibleOverlayToParent(uuid, node);
     onOpen?.(node);
   };
   const handleClose = () => {
-    setParentVisibleState(uuid, null);
+    setVisibleOverlayToParent(uuid, null);
     onClose?.();
   }
 
-  const getChildrenVisibleState = (id: string, node: HTMLElement) => {
+  const getVisibleOverlayFromChild = (id: string, node: HTMLElement) => {
     if (node) {
       childIDMap.current.set(id, node);
     } else {
       childIDMap.current.delete(id);
     }
     // 让父级也感知
-    setParentVisibleState(id, node);
+    setVisibleOverlayToParent(id, node);
   }
 
   const child: ReactElement | undefined = React.Children.only(children);
@@ -292,7 +291,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     // 点击遮罩关闭
     if (hasMask && maskRef.current === e.target) {
       if (canCloseByMask) {
-        onRequestClose('maskClick', e); // will rename to `mask` in 1.0
+        onRequestClose('maskClick', e); // TODO: will rename to `mask` in 1.0
       }
       return;
     }
@@ -315,7 +314,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     }
 
     if (canCloseByOutSideClick) {
-      onRequestClose('docClick', e); // will rename to `doc` in 1.0
+      onRequestClose('docClick', e); // TODO: will rename to `doc` in 1.0
     }
   }
 
@@ -435,7 +434,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
   return <OverlayContext.Provider
     value={{
       ...otherContext,
-      getChildrenVisibleState,
+      setVisibleOverlayToParent: getVisibleOverlayFromChild,
     }}
   >
     {createPortal(content, container)}
