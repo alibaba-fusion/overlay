@@ -213,7 +213,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     safeNodes.push(() => findDOMNode(triggerRef.current) as HTMLElement);
   }
 
-  const target = child ? () => findDOMNode(triggerRef.current) : otarget;
+  const target = otarget? otarget : (child ? () => findDOMNode(triggerRef.current) : body);
   const getContainer = typeof container === 'string' ? () => document.getElementById(container) :
     typeof container !== 'function' ? () => container : () => container(findDOMNode(triggerRef.current) as HTMLElement);
   const overlayContainer = followTrigger ? () => findDOMNode(triggerRef.current)?.parentNode : getContainer;
