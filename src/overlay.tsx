@@ -97,6 +97,11 @@ const isScrollDisplay = function (element: HTMLElement) {
   return true;
 };
 const hasScroll = (containerNode: HTMLElement) => {
+  const overflow = getStyle(containerNode, 'overflow');
+  if (overflow === 'hidden') {
+    return false;
+  }
+
   const parentNode = containerNode.parentNode as HTMLElement;
 
   return (
@@ -165,6 +170,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     typeof popupContainer !== 'function' ? () => popupContainer : popupContainer;
   const [container, setContainer] = useState(null);
   const targetRef = useRef(null);
+  const preTarget = useRef(target);
   const overlayRef = useRef(null);
   const containerRef = useRef(null);
   const maskRef = useRef(null);
@@ -237,7 +243,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
       const containerNode = getRelativeContainer(getHTMLElement(container));
       containerRef.current = containerNode;
 
-      let targetElement = target === 'viewport'? (hasMask ? maskRef.current : body()) : (getTargetNode(target) || body());
+      const targetElement = target === 'viewport'? (hasMask ? maskRef.current : body()) : (getTargetNode(target) || body());
       const targetNode = getHTMLElement(targetElement);
       targetRef.current = targetNode;
 
@@ -385,6 +391,19 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
       }
     }
   }, [visible, cache && overlayNode]);
+
+  // target 有更新则重新刷新定位
+  useEffect(() => {
+    if (visible && overlayNode && target && preTarget.current !== target) {
+      const targetElement = target === 'viewport'? (hasMask ? maskRef.current : body()) : (getTargetNode(target) || body());
+      const targetNode = getHTMLElement(targetElement);
+      if (targetNode && targetRef.current !== targetNode) {
+        targetRef.current = targetNode;
+        updatePosition();
+      }
+      preTarget.current = target;
+    }
+  }, [target])
 
   // autoFocus 弹窗关闭后回到触发点
   useEffect(() => {

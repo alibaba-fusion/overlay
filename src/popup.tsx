@@ -4,7 +4,7 @@ import { CSSProperties, ReactElement } from 'react';
 
 import Overlay, { OverlayEvent, RefWrapper } from './overlay';
 import { placementType } from './placement';
-import { getHTMLElement, makeChain, saveRef } from './utils';
+import { makeChain, saveRef } from './utils';
 
 type TriggerType = 'click' | 'hover' | 'focus';
 export type TriggerTypes = Array<TriggerType>;
