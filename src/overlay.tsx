@@ -4,7 +4,10 @@ import { findDOMNode } from 'react-dom';
 import ResizeObserver from 'resize-observer-polyfill';
 import { createPortal } from 'react-dom';
 import getPlacements, { pointsType, placementType, PositionResult, TargetRect } from './placement';
-import { useListener, getHTMLElement, getTargetNode, getStyle, setStyle, getRelativeContainer, throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList } from './utils';
+import {
+  useListener, getHTMLElement, getTargetNode, getStyle, setStyle, getRelativeContainer,
+  throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList, isSameObject
+} from './utils';
 import OverlayContext from './overlay-context';
 
 export interface OverlayEvent extends MouseEvent, KeyboardEvent {
@@ -186,6 +189,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     onOpen?.(node);
   };
   const handleClose = () => {
+    positionStyleRef.current = null;
     setVisibleOverlayToParent(uuid, null);
     onClose?.();
   }
@@ -219,7 +223,8 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
       overlay: overlayNode,
       container: containerNode,
       scrollNode: overflowRef.current,
-      points, offset,
+      points,
+      offset,
       position,
       placement,
       placementOffset,
@@ -228,9 +233,11 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
       rtl
     });
 
-    positionStyleRef.current = placements.style;
-    setStyle(overlayNode, placements.style);
-    typeof onPosition === 'function' && onPosition(placements);
+    if (!isSameObject(positionStyleRef.current, placements.style)) {
+      positionStyleRef.current = placements.style;
+      setStyle(overlayNode, placements.style);
+      typeof onPosition === 'function' && onPosition(placements);
+    }
   }
 
   // 弹窗挂载
@@ -243,7 +250,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
       const containerNode = getRelativeContainer(getHTMLElement(container));
       containerRef.current = containerNode;
 
-      const targetElement = target === 'viewport'? (hasMask ? maskRef.current : body()) : (getTargetNode(target) || body());
+      const targetElement = target === 'viewport' ? (hasMask ? maskRef.current : body()) : (getTargetNode(target) || body());
       const targetNode = getHTMLElement(targetElement);
       targetRef.current = targetNode;
 
@@ -392,18 +399,26 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     }
   }, [visible, cache && overlayNode]);
 
-  // target 有更新则重新刷新定位
+  // target 动态更新则重新刷新定位
   useEffect(() => {
-    if (visible && overlayNode && target && preTarget.current !== target) {
-      const targetElement = target === 'viewport'? (hasMask ? maskRef.current : body()) : (getTargetNode(target) || body());
-      const targetNode = getHTMLElement(targetElement);
-      if (targetNode && targetRef.current !== targetNode) {
-        targetRef.current = targetNode;
-        updatePosition();
+    if (visible && overlayNode) {
+      if (target && targetRef.current && preTarget.current !== target) {
+        const targetElement = target === 'viewport' ? (hasMask ? maskRef.current : body()) : (getTargetNode(target) || body());
+        const targetNode = getHTMLElement(targetElement);
+        if (targetNode && targetRef.current !== targetNode) {
+          targetRef.current = targetNode;
+          updatePosition();
+        }
+        preTarget.current = target;
       }
-      preTarget.current = target;
     }
-  }, [target])
+  }, [target]);
+
+  useEffect(() => {
+    if (visible && overlayNode) {
+      updatePosition();
+    }
+  }, [offset, placement, placementOffset, points, autoAdjust, rtl]);
 
   // autoFocus 弹窗关闭后回到触发点
   useEffect(() => {

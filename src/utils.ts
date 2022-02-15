@@ -241,7 +241,7 @@ export function getViewTopLeft(node: HTMLElement) {
  * @param       {Element} element
  * @return      {Object}
  */
- export function getWidthHeight(element: HTMLElement) {
+export function getWidthHeight(element: HTMLElement) {
     // element like `svg` do not have offsetWidth and offsetHeight prop
     // then getBoundingClientRect
     if ('offsetWidth' in element && 'offsetHeight' in element) {
@@ -353,7 +353,7 @@ export function getFocusNodeList(node: HTMLElement) {
     return res;
 }
 
-export function getHTMLElement(node:any) {
+export function getHTMLElement(node: any) {
     if (node) {
         if (node.nodeType) {
             if (node.nodeType === 1) {
@@ -379,4 +379,21 @@ export function getTargetNode(target: any) {
 
     // 兼容 target = HTMLElement
     return target;
+}
+
+export function isSameObject(object1: object, object2: object) {
+    if (!object1 || !object2) {
+        return false;
+    }
+    const o1keys = Object.keys(object1);
+    const o2keys = Object.keys(object2);
+    if (o2keys.length !== o1keys.length) return false;
+
+    for (let i = 0; i <= o1keys.length - 1; i++) {
+        const key = o1keys[i];
+        if (!o2keys.includes(key)) return false;
+        //@ts-ignore
+        if (object2[key] !== object1[key]) return false;
+    }
+    return true;
 }
