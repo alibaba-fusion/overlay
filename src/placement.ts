@@ -99,6 +99,9 @@ export interface PositionResult {
   style: CSSProperties;
 }
 
+/**
+ * 根据 placement 计算位置，不做任何位置订正
+ */
 function getXY(p: placementType | undefined, staticInfo: any) {
   const { targetInfo, containerInfo, overlayInfo, points: opoints, placementOffset, offset, rtl } = staticInfo;
   let basex = targetInfo.left - containerInfo.left + containerInfo.scrollLeft;
@@ -183,47 +186,65 @@ function getXY(p: placementType | undefined, staticInfo: any) {
   }
 }
 
-function shouldResizePlacement(l: number, t: number, viewport: HTMLElement, staticInfo: any) {
-  const { container, containerInfo, overlayInfo } = staticInfo;
+function shouldResizePlacement(l: number, t: number, staticInfo: any) {
+  const { container, containerInfo, overlayInfo, viewport } = staticInfo;
+
+  let nl = l, nt = t;
+  let { scrollTop, scrollLeft, clientHeight, clientWidth } = containerInfo;
   if (viewport !== container) {
-    // 说明 container 不具备滚动属性
-    const { left: vleft, top: vtop } = getViewTopLeft(viewport);
-    const { scrollWidth: vwidth, scrollHeight: vheight, scrollTop: vscrollTop, scrollLeft: vscrollLeft } = viewport;
+    // 说明 container 不具备滚动属性，继续向上找父元素
+    const { left: vleft, top: vtop, } = getViewTopLeft(viewport);
 
-    const nt = t + containerInfo.top - vtop + vscrollTop;
-    const nl = l + containerInfo.left - vleft + vscrollLeft;
-
-    return nt < 0 || nl < 0 || nt + overlayInfo.height > vheight || nl + overlayInfo.width > vwidth;
+    nt = (t + containerInfo.top) - vtop + viewport.scrollTop;
+    nl = (l + containerInfo.left) - vleft + viewport.scrollLeft;
+    scrollTop = viewport.scrollTop;
+    scrollLeft = viewport.scrollLeft;
+    clientHeight = viewport.clientHeight;
+    clientWidth = viewport.clientWidth;
   }
 
-  return t < 0 || l < 0 || t + overlayInfo.height > containerInfo.height || l + overlayInfo.width > containerInfo.width;
+  return nt < scrollTop || nl < scrollLeft || nt + overlayInfo.height > clientHeight + scrollTop || nl + overlayInfo.width > clientWidth + scrollLeft;
 }
 
 function getNewPlacement(l: number, t: number, p: placementType, staticInfo: any) {
-  const { overlayInfo, containerInfo } = staticInfo;
+  const { container, overlayInfo, containerInfo, viewport } = staticInfo;
 
   let np = p.split('');
   if (np.length === 1) {
     np.push('');
   }
 
+  let nl = l, nt = t;
+  let { scrollTop, scrollLeft, clientHeight, clientWidth } = containerInfo;
+  if (viewport !== container) {
+    const { left: vleft, top: vtop, } = getViewTopLeft(viewport);
+
+    nt = (t + containerInfo.top) - vtop + viewport.scrollTop;
+    nl = (l + containerInfo.left) - vleft + viewport.scrollLeft;
+    scrollTop = viewport.scrollTop;
+    scrollLeft = viewport.scrollLeft;
+    clientHeight = viewport.clientHeight;
+    clientWidth = viewport.clientWidth;
+  }
+
+
   // 区域不够
-  if (t < 0) {
+  if (nt < scrollTop) {
     // [上边 => 下边, 底部对齐 => 顶部对齐]
     np = [np[0].replace('t', 'b'), np[1].replace('b', 't')];
   }
   // 区域不够
-  if (l < 0) {
+  if (nl < scrollLeft) {
     // [左边 => 右边, 右对齐 => 左对齐]
     np = [np[0].replace('l', 'r'), np[1].replace('r', 'l')];
   }
   // 超出区域
-  if (t + overlayInfo.height > containerInfo.height) {
+  if (nt + overlayInfo.height > clientHeight + scrollTop) {
     // [下边 => 上边, 顶部对齐 => 底部对齐]
     np = [np[0].replace('b', 't'), np[1].replace('t', 'b')];
   }
   // 超出区域
-  if (l + overlayInfo.width > containerInfo.width) {
+  if (nl + overlayInfo.width > clientWidth + scrollLeft) {
     // [右边 => 左边, 左对齐 => 右对齐]
     np = [np[0].replace('r', 'l'), np[1].replace('l', 'r')];
   }
@@ -289,8 +310,8 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
    * scrollTop: 容器上下滚动距离
    * scrollLeft: 容器左右滚动距离
    */
-   const { width: owidth, height: oheight } = getWidthHeight(overlay);
-   if (position === 'fixed') {
+  const { width: owidth, height: oheight } = getWidthHeight(overlay);
+  if (position === 'fixed') {
     const result = <PositionResult>{
       config: {
         placement: undefined,
@@ -317,12 +338,14 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
 
   const { width: twidth, height: theight, left: tleft, top: ttop } = target.getBoundingClientRect();
   const { left: cleft, top: ctop } = getViewTopLeft(container);
-  const { scrollWidth: cwidth, scrollHeight: cheight, scrollTop: cscrollTop, scrollLeft: cscrollLeft } = container;
+  const { scrollWidth: cwidth, scrollHeight: cheight, scrollTop: cscrollTop, scrollLeft: cscrollLeft,
+    clientWidth: cclientWidth, clientHeight: cclientHeight } = container;
 
   const staticInfo = {
     targetInfo: { width: twidth, height: theight, left: tleft, top: ttop },
-    containerInfo: { left: cleft, top: ctop, width: cwidth, height: cheight, scrollTop: cscrollTop, scrollLeft: cscrollLeft },
+    containerInfo: { left: cleft, top: ctop, width: cwidth, height: cheight, scrollTop: cscrollTop, scrollLeft: cscrollLeft, clientWidth: cclientWidth, clientHeight: cclientHeight },
     overlayInfo: { width: owidth, height: oheight },
+    viewport: getViewPort(container), // 获取可视区域，来重新计算容器相对位置
     points: opoints,
     placementOffset,
     offset,
@@ -333,18 +356,15 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
   // step1: 根据 placement 计算位置
   let { left, top, points } = getXY(placement, staticInfo);
 
-  // 获取可视区域，来计算容器相对位置
-  const viewport = getViewPort(container);
-
-  // step2: 根据 viewport（挂载容器不一定是可视区, eg: 挂载在父节点，但是弹窗超出父节点）重新计算位置. 根据可视区域优化位置
+  // step2: 根据 viewport（挂载容器不一定是可视区, eg: 挂载在body下面的某个div节点，但是弹窗可超出div点）重新计算位置. 根据可视区域优化位置
   // 位置动态优化思路见 https://github.com/alibaba-fusion/overlay/issues/2
-  if (autoAdjust && placement && shouldResizePlacement(left, top, viewport, staticInfo)) {
+  if (autoAdjust && placement && shouldResizePlacement(left, top, staticInfo)) {
     const nplacement = getNewPlacement(left, top, placement, staticInfo);
     // step2: 空间不够，替换位置重新计算位置
     if (placement !== nplacement) {
       let { left: nleft, top: ntop } = getXY(nplacement, staticInfo);
 
-      if (shouldResizePlacement(nleft, ntop, viewport, staticInfo)) {
+      if (shouldResizePlacement(nleft, ntop, staticInfo)) {
         const nnplacement = getNewPlacement(nleft, ntop, nplacement, staticInfo);
         // step3: 空间依然不够，说明xy轴至少有一个方向是怎么更换位置都不够的。停止计算开始补偿逻辑
         if (nplacement !== nnplacement) {
