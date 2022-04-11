@@ -59,7 +59,6 @@ class Demo extends React.Component {
         <br/>
         <button onClick={this.onClick} ref={ref => this.btn2 = ref} style={{ marginLeft: 500, marginTop: 400 }}>Third</button>
         <Overlay
-          v2={true}
           placement="b"
           visible={this.state.visible}
           target={this.state.target}

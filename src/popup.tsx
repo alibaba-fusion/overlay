@@ -62,6 +62,7 @@ export interface PopupProps {
   followTrigger?: boolean;
   canCloseByEsc?: boolean;
   canCloseByTrigger?: boolean;
+  disabled?: boolean;
   /**
    * 和 trigger 互斥使用
    */
@@ -87,6 +88,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     safeNode,
     followTrigger = false,
     target: otarget,
+    disabled = false,
     ...others
   } = props;
 
@@ -107,6 +109,10 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
   }, [props.visible]);
 
   const handleVisibleChange = (visible: boolean, e: OverlayEvent, triggerType: string = 'fromTrigger') => {
+    if (disabled) {
+      return;
+    }
+    
     if (!('visible' in props)) {
       if (visible || overlayRef.current) {
         setVisible(visible);
@@ -187,7 +193,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
   const overlayOtherProps: any = {};
   const safeNodes = Array.isArray(safeNode) ? safeNode : [safeNode];
 
-  if (child) {
+  if (child && !disabled) {
     const triggerTypeList: TriggerTypes = typeof triggerType === 'string' ? [triggerType] : triggerType;
     triggerTypeList.forEach(t => {
       switch (t) {
