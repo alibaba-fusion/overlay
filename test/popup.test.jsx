@@ -117,6 +117,39 @@ describe('Popup', () => {
     expect(wrapper.find('.content').length).toBe(0);
   });
 
+  it('should not call onclose with disabled=true', async () => {
+    wrapper = mount(<Popup
+      disabled
+      triggerType="click"
+      overlay={<div style={style} id="content" className="content">Hello World From Popup!</div>}>
+      <button>Open</button>
+    </Popup>);
+
+    expect(wrapper.find('button').length).toBe(1);
+    expect(wrapper.find('.content').length).toBe(0);
+
+    wrapper.find('button').simulate('click');
+    wrapper.update();
+    expect(wrapper.find('.content').length).toBe(0);
+  });
+
+  it('should not call onclose with disabled=true and visible=true', async () => {
+    wrapper = mount(<Popup
+      disabled
+      visible
+      triggerType="click"
+      overlay={<div style={style} id="content" className="content">Hello World From Popup!</div>}>
+      <button>Open</button>
+    </Popup>);
+
+    expect(wrapper.find('button').length).toBe(1);
+    expect(wrapper.find('.content').length).toBe(1);
+
+    wrapper.find('button').simulate('click');
+    wrapper.update();
+    expect(wrapper.find('.content').length).toBe(1);
+  });
+
   it('should support triggerType=focus', async () => {
     wrapper = mount(<Popup
       triggerType="focus"
