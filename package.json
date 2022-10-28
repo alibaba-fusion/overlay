@@ -1,6 +1,6 @@
 {
   "name": "@alifd/overlay",
-  "version": "0.2.8",
+  "version": "0.2.11-beta",
   "description": "overlay base component",
   "files": [
     "demo/",
@@ -14,6 +14,7 @@
   "scripts": {
     "start": "build-scripts start",
     "build": "build-scripts build",
+    "watch": "npm run build -- --watch",
     "test": "build-scripts test",
     "prepublishOnly": "npm run build",
     "eslint": "eslint --cache --ext .js,.jsx ./",
