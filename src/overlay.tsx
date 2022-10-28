@@ -1,12 +1,11 @@
-import React, { useEffect, useState, useCallback, useRef, cloneElement, useContext } from 'react';
-import { CSSProperties, ReactElement } from 'react';
-import { findDOMNode } from 'react-dom';
+import React, { useEffect, useState, useCallback, useRef, cloneElement, useContext, CSSProperties, ReactElement } from 'react';
+import { findDOMNode, createPortal } from 'react-dom';
 import ResizeObserver from 'resize-observer-polyfill';
-import { createPortal } from 'react-dom';
 import getPlacements, { pointsType, placementType, PositionResult, TargetRect } from './placement';
 import {
   useListener, getHTMLElement, getTargetNode, getStyle, setStyle, getRelativeContainer,
-  throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList, isSameObject
+  throttle, callRef, getOverflowNodes, getScrollbarWidth, getFocusNodeList, isSameObject,
+  useEvent,
 } from './utils';
 import OverlayContext from './overlay-context';
 
@@ -177,7 +176,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
   const overlayRef = useRef(null);
   const containerRef = useRef(null);
   const maskRef = useRef(null);
-  const overflowRef = useRef<Array<HTMLElement>>([]);
+  const overflowRef = useRef<HTMLElement[]>([]);
   const lastFocus = useRef(null);
   const ro = useRef(null);
   const [uuid] = useState((Date.now()).toString(36));
@@ -192,7 +191,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     positionStyleRef.current = null;
     setVisibleOverlayToParent(uuid, null);
     onClose?.();
-  }
+  };
 
   const getVisibleOverlayFromChild = (id: string, node: HTMLElement) => {
     if (node) {
@@ -202,14 +201,14 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     }
     // 让父级也感知
     setVisibleOverlayToParent(id, node);
-  }
+  };
 
   const child: ReactElement | undefined = React.Children.only(children);
   if (typeof (child as any).ref === 'string') {
     throw new Error('Can not set ref by string in Overlay, use function instead.');
   }
 
-  const updatePosition = () => {
+  const updatePosition = useEvent(() => {
     const overlayNode = overlayRef.current;
     const containerNode = containerRef.current;
     const targetNode = targetRef.current;
@@ -230,7 +229,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
       placementOffset,
       beforePosition,
       autoAdjust,
-      rtl
+      rtl,
     });
 
     if (!isSameObject(positionStyleRef.current, placements.style)) {
@@ -238,7 +237,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
       setStyle(overlayNode, placements.style);
       typeof onPosition === 'function' && onPosition(placements);
     }
-  }
+  });
 
   // 弹窗挂载
   const overlayRefCallback = useCallback((nodeRef) => {
@@ -290,7 +289,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
 
   const clickEvent = (e: OverlayEvent) => {
     // 点击在子元素上面，则忽略。为了兼容 react16，这里用 contains 判断而不利用 e.stopPropagation() 阻止冒泡的特性来处理
-    for (let [, oNode] of childIDMap.current.entries()) {
+    for (const [, oNode] of childIDMap.current.entries()) {
       const node = getHTMLElement(oNode);
       if (node && (node === e.target || node.contains(e.target as Node))) {
         return;
@@ -329,11 +328,11 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     if (canCloseByOutSideClick) {
       onRequestClose('docClick', e); // TODO: will rename to `doc` in 1.0
     }
-  }
+  };
 
   // 这里用 mousedown 而不是用 click。因为 click 是 mouseup 才触发。
   // 如果用 click 带来的问题: mousedown 在弹窗内部，然后按住鼠标不放拖动到弹窗外触发 mouseup 结果弹窗关了，这是不期望的展示。 https://github.com/alibaba-fusion/next/issues/742
-  // react 17 冒泡问题: 
+  // react 17 冒泡问题:
   //  - react17 中，如果弹窗 mousedown 阻止了 e.stopPropagation(), 那么 document 就不会监听到事件，因为事件冒泡到挂载节点 rootElement 就中断了。
   //  - https://reactjs.org/blog/2020/08/10/react-v17-rc.html#changes-to-event-delegation
   useListener(document as unknown as HTMLElement, 'mousedown', clickEvent, false, !!(visible && overlayRef.current && (canCloseByOutSideClick || (hasMask && canCloseByMask))));
@@ -347,7 +346,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     if (e.keyCode === 27 && canCloseByEsc && !childIDMap.current.size) {
       onRequestClose('esc', e);
     }
-  }
+  };
   useListener(document as unknown as HTMLElement, 'keydown', keydownEvent, false, !!(visible && overlayRef.current && canCloseByEsc));
 
   const scrollEvent = (e: OverlayEvent) => {
@@ -355,8 +354,8 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
       return;
     }
     updatePosition();
-  }
-  useListener(overflowRef.current, 'scroll', scrollEvent as any, false, !!(visible && overlayRef.current && overflowRef.current?.length))
+  };
+  useListener(overflowRef.current, 'scroll', scrollEvent as any, false, !!(visible && overlayRef.current && overflowRef.current?.length));
 
   // 有弹窗情况下在 body 增加 overflow:hidden，两个弹窗同时存在也没问题，会按照堆的方式依次 pop
   useEffect(() => {
@@ -373,7 +372,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
 
       return () => {
         document.body.setAttribute('style', originStyle || '');
-      }
+      };
     }
 
     return undefined;
@@ -448,31 +447,32 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     return null;
   }
 
-  const newChildren = child ? <RefWrapper ref={overlayRefCallback}>{cloneElement(child, {
+  const newChildren = child ? (<RefWrapper ref={overlayRefCallback}>{cloneElement(child, {
     ...others,
-    style: { top: 0, left: 0, ...child.props.style, ...positionStyleRef.current }
-  })}</RefWrapper> : null;
+    style: { top: 0, left: 0, ...child.props.style, ...positionStyleRef.current },
+  })}
+  </RefWrapper>) : null;
 
   const wrapperStyle = { ...owrapperStyle };
   if (cache && !visible && isAnimationEnd) {
     wrapperStyle.display = 'none';
   }
 
-  const maskNode = <div className={maskClassName} style={maskStyle} ref={maskRef}></div>
+  const maskNode = <div className={maskClassName} style={maskStyle} ref={maskRef} />;
 
   const content = (<div className={wrapperClassName} style={wrapperStyle}>
     {hasMask ? (maskRender ? maskRender(maskNode) : maskNode) : null}
     {newChildren}
-  </div>);
+                   </div>);
 
-  return <OverlayContext.Provider
+  return (<OverlayContext.Provider
     value={{
       ...otherContext,
       setVisibleOverlayToParent: getVisibleOverlayFromChild,
     }}
   >
     {createPortal(content, container)}
-  </OverlayContext.Provider>
+  </OverlayContext.Provider>);
 });
 
 export default Overlay;
