@@ -397,7 +397,7 @@ export function isSameObject(object1: object, object2: object) {
 }
 
 export const useEvent = (handler: Function) => {
-  const handleRef = useRef(null);
+  const handleRef = useRef(handler);
 
   useLayoutEffect(() => {
     handleRef.current = handler;
