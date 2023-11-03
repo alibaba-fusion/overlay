@@ -242,13 +242,16 @@ function ajustLeftAndTop(l: number, t: number, staticInfo: any) {
   }
   if (t + overlayInfo.height > containerInfo.height) {
     t = containerInfo.height - overlayInfo.height;
-    if (t < overlayInfo.height && t < 0) {
-      if (containerInfo.top < overlayInfo.height) {
-        t = targetInfo.height + targetInfo.top - containerInfo.top;
-      }
-      if (containerInfo.top > overlayInfo.height) {
-        t = targetInfo.top - containerInfo.top - overlayInfo.height;
-      }
+  }
+  if (
+    t < overlayInfo.height &&
+    overlayInfo.height + targetInfo.height > containerInfo.height
+  ) {
+    if (containerInfo.top < overlayInfo.height) {
+      t = targetInfo.height + targetInfo.top - containerInfo.top;
+    }
+    if (containerInfo.top > overlayInfo.height) {
+      t = targetInfo.top - containerInfo.top - overlayInfo.height;
     }
   }
   if (l + overlayInfo.width > containerInfo.width) {
