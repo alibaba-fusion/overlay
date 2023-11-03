@@ -232,7 +232,7 @@ function getNewPlacement(l: number, t: number, p: placementType, staticInfo: any
 }
 
 function ajustLeftAndTop(l: number, t: number, staticInfo: any) {
-  const { overlayInfo, containerInfo } = staticInfo;
+  const { overlayInfo, containerInfo, targetInfo} = staticInfo;
 
   if (t < 0) {
     t = 0;
@@ -242,9 +242,20 @@ function ajustLeftAndTop(l: number, t: number, staticInfo: any) {
   }
   if (t + overlayInfo.height > containerInfo.height) {
     t = containerInfo.height - overlayInfo.height;
+    if (t < overlayInfo.height && t < 0) {
+      if (containerInfo.top < overlayInfo.height) {
+        t = targetInfo.height + targetInfo.top - containerInfo.top;
+      }
+      if (containerInfo.top > overlayInfo.height) {
+        t = targetInfo.top - containerInfo.top - overlayInfo.height;
+      }
+    }
   }
   if (l + overlayInfo.width > containerInfo.width) {
     l = containerInfo.width - overlayInfo.width;
+    if (targetInfo.left === 0) {
+      l = 0;
+    }
   }
 
   return {
