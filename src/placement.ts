@@ -261,7 +261,7 @@ function ajustLeftAndTop(l: number, t: number, staticInfo: any) {
       l = 0;
     }
   }
-  console.log(t2,'t1')
+  console.log(t,'t1')
   return {
     left: l,
     top: t
@@ -352,6 +352,7 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
   const viewport = getViewPort(container);
   // step2: 根据 viewport（挂载容器不一定是可视区, eg: 挂载在父节点，但是弹窗超出父节点）重新计算位置. 根据可视区域优化位置
   // 位置动态优化思路见 https://github.com/alibaba-fusion/overlay/issues/2
+  console.log(placement,'nplacement')
   if (autoAdjust && placement && shouldResizePlacement(left, top, viewport, staticInfo)) {
     const nplacement = getNewPlacement(left, top, placement, staticInfo);
     console.log(placement,nplacement,'nplacement')
