@@ -350,7 +350,6 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
 
   // 获取可视区域，来计算容器相对位置
   const viewport = getViewPort(container);
-  console.log(placement,autoAdjust,houldResizePlacement(left, top, viewport, staticInfo),'nplacement')
   // step2: 根据 viewport（挂载容器不一定是可视区, eg: 挂载在父节点，但是弹窗超出父节点）重新计算位置. 根据可视区域优化位置
   // 位置动态优化思路见 https://github.com/alibaba-fusion/overlay/issues/2
   if (autoAdjust && placement && shouldResizePlacement(left, top, viewport, staticInfo)) {
