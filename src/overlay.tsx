@@ -417,7 +417,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     if (visible && overlayNode) {
       updatePosition();
     }
-  }, [offset, placement, placementOffset, points, autoAdjust, rtl]);
+  }, [offset, placement, placementOffset, points, autoAdjust, rtl,overlayNode]);
 
   // autoFocus 弹窗关闭后回到触发点
   useEffect(() => {
