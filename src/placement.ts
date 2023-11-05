@@ -233,7 +233,6 @@ function getNewPlacement(l: number, t: number, p: placementType, staticInfo: any
 
 function ajustLeftAndTop(l: number, t: number, staticInfo: any) {
   const { overlayInfo, containerInfo, targetInfo} = staticInfo;
-  console.log(l,t,staticInfo,'staticInfo')
   if (t < 0) {
     t = 0;
   }
@@ -243,7 +242,6 @@ function ajustLeftAndTop(l: number, t: number, staticInfo: any) {
   if (t + overlayInfo.height > containerInfo.height) {
     t = containerInfo.height - overlayInfo.height;
   }
-  console.log(t,'t1')
   if (
     t < overlayInfo.height &&
     overlayInfo.height + targetInfo.height > containerInfo.height
@@ -261,7 +259,6 @@ function ajustLeftAndTop(l: number, t: number, staticInfo: any) {
       l = 0;
     }
   }
-  console.log(t,'t1')
   return {
     left: l,
     top: t
@@ -352,10 +349,8 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
   const viewport = getViewPort(container);
   // step2: 根据 viewport（挂载容器不一定是可视区, eg: 挂载在父节点，但是弹窗超出父节点）重新计算位置. 根据可视区域优化位置
   // 位置动态优化思路见 https://github.com/alibaba-fusion/overlay/issues/2
-  console.log(placement,'nplacement')
   if (autoAdjust && placement && shouldResizePlacement(left, top, viewport, staticInfo)) {
     const nplacement = getNewPlacement(left, top, placement, staticInfo);
-    console.log(placement,nplacement,'nplacement')
     // step2: 空间不够，替换位置重新计算位置
     if (placement !== nplacement) {
       let { left: nleft, top: ntop } = getXY(nplacement, staticInfo);
