@@ -306,4 +306,42 @@ describe('Popup', () => {
     wrapper.find('button').simulate('click');
     wrapper.update();
   });
+  
+  it('should support automatic positioning', async () => {
+    const Demo = () => {
+      const wrapStyle = {
+        position: 'fixed',
+        left: '0',
+        bottom: '0',
+        display: 'flex',
+        flexDirection: 'column',
+      }
+      const contentStyle = {
+        width: 400,
+        height: 100,
+        padding: 10,
+        background: '#fff',
+        borderRadius: 2,
+        boxShadow: '2px 2px 20px rgba(0, 0, 0, 0.15)',
+      }
+      const FunctionalOverlay = (props) => <span className='balloon-test' style={contentStyle}>
+        Hello World From Popup!
+      </span>
+      return <div style={wrapStyle}>
+        <Popup overlay={<FunctionalOverlay />} triggerType="click" followTrigger>
+          <button className='overlay-test-btn' style={{ border: '4px solid' }}>Open</button>
+        </Popup>
+        <br />
+        <br />
+        <Popup overlay={<FunctionalOverlay />} triggerType="click" triggerClickKeyCode={40}>
+          <input placeholder="Use Down Arrow to open" />
+        </Popup>
+      </div >
+    }
+
+    const wrapper = mount(<Demo />);
+    wrapper.find('.overlay-test-btn').simulate('click');
+    wrapper.update();
+    expect(wrapper.find('.balloon-test').at(0).instance().style.left === 0);
+  });
 })
