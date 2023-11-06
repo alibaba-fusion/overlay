@@ -237,6 +237,9 @@ function getNewPlacement(l: number, t: number, p: placementType, staticInfo: any
   if (l + overlayInfo.width > containerInfo.width) {
     // [右边 => 左边, 左对齐 => 右对齐]
     np = [np[0].replace('r', 'l'), np[1].replace('l', 'r')];
+    if (targetInfo.left + targetInfo.width < overlayInfo.width) {
+      np = [np[0], np[1].replace("r", "l")];
+    }
     if (np[0] === "" && (np[1].indexOf("b") > -1 || np[1].indexOf("t") > -1)) {
       np = [np[0].replace("", "l"), np[1]];
     }
@@ -276,6 +279,15 @@ function ajustLeftAndTop(l: number, t: number, staticInfo: any) {
     if (targetInfo.left === 0) {
       l = 0;
     }
+    if (l < overlayInfo.width && containerInfo.width < overlayInfo.width) {
+      if (targetInfo.width + targetInfo.left < overlayInfo.width) {
+        l = targetInfo.left;
+      }
+      if (targetInfo.width + targetInfo.left > overlayInfo.width) {
+        l = containerInfo.width - overlayInfo.width;
+      }
+    }
+
   }
   return {
     left: l,
