@@ -200,7 +200,7 @@ function shouldResizePlacement(l: number, t: number, viewport: HTMLElement, stat
 }
 
 function getNewPlacement(l: number, t: number, p: placementType, staticInfo: any) {
-  const { overlayInfo, containerInfo } = staticInfo;
+  const { overlayInfo, containerInfo, targetInfo } = staticInfo;
 
   let np = p.split('');
   if (np.length === 1) {
@@ -222,10 +222,28 @@ function getNewPlacement(l: number, t: number, p: placementType, staticInfo: any
     // [下边 => 上边, 顶部对齐 => 底部对齐]
     np = [np[0].replace('b', 't'), np[1].replace('t', 'b')];
   }
+  if (
+    t < overlayInfo.height &&
+    overlayInfo.height + targetInfo.height > containerInfo.height
+  ) {
+    if (containerInfo.top < overlayInfo.height) {
+      np = [np[0].replace("t", "b"), np[1].replace("b", "t")];
+    }
+    if (containerInfo.top > overlayInfo.height) {
+      np = [np[0].replace("b", "t"), np[1].replace("t", "b")];
+    }
+  }
   // 超出区域
   if (l + overlayInfo.width > containerInfo.width) {
     // [右边 => 左边, 左对齐 => 右对齐]
     np = [np[0].replace('r', 'l'), np[1].replace('l', 'r')];
+    if (np[0] === "" && (np[1].indexOf("b") > -1 || np[1].indexOf("t") > -1)) {
+      np = [np[0].replace("", "l"), np[1]];
+    }
+    if (np[1] === "" && (np[0].indexOf("b") > -1 || np[0].indexOf("t") > -1)) {
+      np = [np[0], np[1].replace("", "l")];
+    }
+
   }
 
   return np.join('') as placementType;
