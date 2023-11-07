@@ -394,14 +394,15 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
     // result.style.left = 0;
     // result.style.top = 0;
 
-    scrollNode.forEach(node => {
+    for (const node of scrollNode) {
       const { top, left, width, height } = node.getBoundingClientRect();
       if (ttop + theight < top || ttop > top + height || tleft + twidth < left || tleft > left + width) {
         result.style.display = 'none';
+        break;
       } else {
         result.style.display = '';
       }
-    });
+    }
   }
 
   if (beforePosition && typeof beforePosition) {
