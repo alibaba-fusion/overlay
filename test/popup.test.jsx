@@ -49,7 +49,7 @@ const render = element => {
       }
       return node;
     },
-    update: () => {},
+    update: () => { },
   };
 };
 
@@ -201,15 +201,15 @@ describe('Popup', () => {
     const overlay = <div
       className="next-overlay-inner"
       style={{
-          width: '200px',
-          height: '200px',
-          background: 'red',
+        width: '200px',
+        height: '200px',
+        background: 'red',
       }}
     >
       Hello World From Popup!
     </div>;
     wrapper = render(<Popup visible cache overlay={overlay} placement="b" autoAdjust={false}>
-      <button style={{width: 10, height: 10}}>click</button>
+      <button style={{ width: 10, height: 10 }}>click</button>
     </Popup>);
 
     await delay(100)
@@ -223,7 +223,7 @@ describe('Popup', () => {
 
     const FunctionalButton = (props) => <button {...props}>Open</button>;
     const FunctionalOverlay = () => <div style={style} id="content" className="content">Hello World From Popup!</div>;
-    const wrapper = mount(<Popup overlay={<FunctionalOverlay/>} ref={ref}>
+    const wrapper = mount(<Popup overlay={<FunctionalOverlay />} ref={ref}>
       <FunctionalButton />
     </Popup>);
 
@@ -242,13 +242,13 @@ describe('Popup', () => {
       const [visible, setVisible] = useState(false);
       const divref = useRef(null);
       return <>
-        <Popup 
-          target={()=>divref.current}
-          visible={visible} 
-          overlay={<div style={style} id="content" className="content-nochildren">Hello World From Popup!</div>} 
+        <Popup
+          target={() => divref.current}
+          visible={visible}
+          overlay={<div style={style} id="content" className="content-nochildren">Hello World From Popup!</div>}
         />
-        <button onClick={()=>setVisible(true)} >target</button>
-        <div ref={divref} style={{width: 20, height: 20, marginLeft: 100}}/>
+        <button onClick={() => setVisible(true)} >target</button>
+        <div ref={divref} style={{ width: 20, height: 20, marginLeft: 100 }} />
       </>
     }
 
@@ -268,7 +268,7 @@ describe('Popup', () => {
   it.skip('should support dynamic triggger DOM', async (done) => {
     const DyncButton = (props) => {
       const [disabled, setDisabled] = useState(false);
-    
+
       useEffect(() => {
         setTimeout(() => {
           act(() => {
@@ -276,14 +276,14 @@ describe('Popup', () => {
           });
         }, 100);
       }, []);
-    
+
       if (disabled) {
-          return <span className="button">
-              <button {...props} disabled style={{width: 80, height: 20}}>Disabled button</button>
-          </span>
+        return <span className="button">
+          <button {...props} disabled style={{ width: 80, height: 20 }}>Disabled button</button>
+        </span>
       }
-      
-      return <button {...props} className="button" style={{width: 80, height: 20}}>Open</button>
+
+      return <button {...props} className="button" style={{ width: 80, height: 20 }}>Open</button>
     };
 
     const beforePosition = (result, info) => {
@@ -293,20 +293,20 @@ describe('Popup', () => {
       return result;
     }
 
-    wrapper = render(<Popup 
+    wrapper = render(<Popup
       overlay={<div style={style} id="content" className="content">Hello World From Popup!</div>}
       triggerType="click"
       beforePosition={beforePosition}
     >
       <DyncButton />
     </Popup>);
-    
+
     expect(wrapper.find('.content').length).toBe(0);
 
     wrapper.find('button').simulate('click');
     wrapper.update();
   });
-  
+
   it('should support automatic positioning', async () => {
     const Demo = () => {
       const wrapStyle = {

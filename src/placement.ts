@@ -1,9 +1,21 @@
-import { CSSProperties } from 'react';
-import { getViewTopLeft, getViewPort, getWidthHeight } from './utils';
+import { CSSProperties } from "react";
+import { getViewTopLeft, getViewPort, getWidthHeight } from "./utils";
 
-type point = 'tl' | 'tc' | 'tr' | 'cl' | 'cc' | 'cr' | 'bl' | 'bc' | 'br';
+type point = "tl" | "tc" | "tr" | "cl" | "cc" | "cr" | "bl" | "bc" | "br";
 export type pointsType = [point, point];
-export type placementType = 'tl' | 't' | 'tr' | 'rt' | 'r' | 'rb' | 'bl' | 'b' | 'br' | 'lt' | 'l' | 'lb';
+export type placementType =
+  | "tl"
+  | "t"
+  | "tr"
+  | "rt"
+  | "r"
+  | "rb"
+  | "bl"
+  | "b"
+  | "br"
+  | "lt"
+  | "l"
+  | "lb";
 
 export interface TargetRect {
   width: number;
@@ -16,10 +28,10 @@ export interface TargetRect {
    * 相对网页顶部间距
    */
   top: number;
-};
+}
 
 export interface PlacementsConfig {
-  position: 'absolute' | 'fixed';
+  position: "absolute" | "fixed";
   /**
    * 弹窗的目标定位元素
    */
@@ -77,43 +89,51 @@ export interface placementMapType {
 }
 
 const placementMap: placementMapType = {
-  tl: ['bl', 'tl'],
-  t: ['bc', 'tc'],
-  tr: ['br', 'tr'],
-  lt: ['tr', 'tl'],
-  l: ['cr', 'cl'],
-  lb: ['br', 'bl'],
-  bl: ['tl', 'bl'],
-  b: ['tc', 'bc'],
-  br: ['tr', 'br'],
-  rt: ['tl', 'tr'],
-  r: ['cl', 'cr'],
-  rb: ['bl', 'br'],
+  tl: ["bl", "tl"],
+  t: ["bc", "tc"],
+  tr: ["br", "tr"],
+  lt: ["tr", "tl"],
+  l: ["cr", "cl"],
+  lb: ["br", "bl"],
+  bl: ["tl", "bl"],
+  b: ["tc", "bc"],
+  br: ["tr", "br"],
+  rt: ["tl", "tr"],
+  r: ["cl", "cr"],
+  rb: ["bl", "br"],
 };
 
 export interface PositionResult {
   config?: {
     placement: placementType;
     points: pointsType;
-  },
+  };
   style: CSSProperties;
 }
 
 function getXY(p: placementType | undefined, staticInfo: any) {
-  const { targetInfo, containerInfo, overlayInfo, points: opoints, placementOffset, offset, rtl } = staticInfo;
+  const {
+    targetInfo,
+    containerInfo,
+    overlayInfo,
+    points: opoints,
+    placementOffset,
+    offset,
+    rtl,
+  } = staticInfo;
   let basex = targetInfo.left - containerInfo.left + containerInfo.scrollLeft;
   let basey = targetInfo.top - containerInfo.top + containerInfo.scrollTop;
 
   function setPointX(point: string, positive = true, width: number) {
     const plus = positive ? 1 : -1;
     switch (point) {
-      case 'l':
+      case "l":
         basex += 0;
         break;
-      case 'c':
-        basex += plus * width / 2;
+      case "c":
+        basex += (plus * width) / 2;
         break;
-      case 'r':
+      case "r":
         basex += plus * width;
         break;
     }
@@ -122,13 +142,13 @@ function getXY(p: placementType | undefined, staticInfo: any) {
   function setPointY(point: string, positive = true, height: number) {
     const plus = positive ? 1 : -1;
     switch (point) {
-      case 't':
+      case "t":
         basey += 0;
         break;
-      case 'c':
-        basey += plus * height / 2;
+      case "c":
+        basey += (plus * height) / 2;
         break;
-      case 'b':
+      case "b":
         basey += plus * height;
         break;
     }
@@ -142,14 +162,14 @@ function getXY(p: placementType | undefined, staticInfo: any) {
   // rtl 左右对调
   if (rtl) {
     if (points[0].match(/l/)) {
-      points[0] = points[0].replace('l', 'r') as placementType;
+      points[0] = points[0].replace("l", "r") as placementType;
     } else if (points[0].match(/r/)) {
-      points[0] = points[0].replace('r', 'l') as placementType;
+      points[0] = points[0].replace("r", "l") as placementType;
     }
     if (points[1].match(/l/)) {
-      points[1] = points[1].replace('l', 'r') as placementType;
+      points[1] = points[1].replace("l", "r") as placementType;
     } else if (points[1].match(/r/)) {
-      points[1] = points[1].replace('r', 'l') as placementType;
+      points[1] = points[1].replace("r", "l") as placementType;
     }
   }
 
@@ -161,16 +181,16 @@ function getXY(p: placementType | undefined, staticInfo: any) {
 
   if (placementOffset && p.length >= 1) {
     switch (p[0]) {
-      case 't':
+      case "t":
         basey -= placementOffset;
         break;
-      case 'b':
+      case "b":
         basey += placementOffset;
         break;
-      case 'l':
+      case "l":
         basex -= placementOffset;
         break;
-      case 'r':
+      case "r":
         basex += placementOffset;
         break;
     }
@@ -180,55 +200,83 @@ function getXY(p: placementType | undefined, staticInfo: any) {
     points,
     left: basex + offset[0],
     top: basey + offset[1],
-  }
+  };
 }
 
-function shouldResizePlacement(l: number, t: number, viewport: HTMLElement, staticInfo: any) {
+function shouldResizePlacement(
+  l: number,
+  t: number,
+  viewport: HTMLElement,
+  staticInfo: any
+) {
   const { container, containerInfo, overlayInfo } = staticInfo;
   if (viewport !== container) {
     // 说明 container 不具备滚动属性
     const { left: vleft, top: vtop } = getViewTopLeft(viewport);
-    const { scrollWidth: vwidth, scrollHeight: vheight, scrollTop: vscrollTop, scrollLeft: vscrollLeft } = viewport;
+    const {
+      scrollWidth: vwidth,
+      scrollHeight: vheight,
+      scrollTop: vscrollTop,
+      scrollLeft: vscrollLeft,
+    } = viewport;
 
     const nt = t + containerInfo.top - vtop + vscrollTop;
     const nl = l + containerInfo.left - vleft + vscrollLeft;
 
-    return nt < 0 || nl < 0 || nt + overlayInfo.height > vheight || nl + overlayInfo.width > vwidth;
+    return (
+      nt < 0 ||
+      nl < 0 ||
+      nt + overlayInfo.height > vheight ||
+      nl + overlayInfo.width > vwidth
+    );
   }
 
-  return t < 0 || l < 0 || t + overlayInfo.height > containerInfo.height || l + overlayInfo.width > containerInfo.width;
+  return (
+    t < 0 ||
+    l < 0 ||
+    t + overlayInfo.height > containerInfo.height ||
+    l + overlayInfo.width > containerInfo.width
+  );
 }
 
-function getNewPlacement(l: number, t: number, p: placementType, staticInfo: any) {
+function getNewPlacement(
+  l: number,
+  t: number,
+  p: placementType,
+  staticInfo: any
+) {
   const { overlayInfo, containerInfo, targetInfo } = staticInfo;
 
-  let np = p.split('');
+  let np = p.split("");
   if (np.length === 1) {
-    np.push('');
+    np.push("");
   }
 
   // 区域不够
   if (t < 0) {
     // [上边 => 下边, 底部对齐 => 顶部对齐]
-    np = [np[0].replace('t', 'b'), np[1].replace('b', 't')];
+    np = [np[0].replace("t", "b"), np[1].replace("b", "t")];
   }
   // 区域不够
   if (l < 0) {
     // [左边 => 右边, 右对齐 => 左对齐]
-    np = [np[0].replace('l', 'r'), np[1].replace('r', 'l')];
+    np = [np[0].replace("l", "r"), np[1].replace("r", "l")];
   }
   // 超出区域
   if (t + overlayInfo.height > containerInfo.height) {
     // [下边 => 上边, 顶部对齐 => 底部对齐]
-    np = [np[0].replace('b', 't'), np[1].replace('t', 'b')];
+    np = [np[0].replace("b", "t"), np[1].replace("t", "b")];
   }
+  // 超出区域
   if (
     t < overlayInfo.height &&
     overlayInfo.height + targetInfo.height > containerInfo.height
   ) {
+    // [上边 => 下边, 底部对齐 => 顶部对齐]
     if (containerInfo.top < overlayInfo.height) {
       np = [np[0].replace("t", "b"), np[1].replace("b", "t")];
     }
+    // [下边 => 上边, 顶部对齐 =>底部对齐 ]
     if (containerInfo.top > overlayInfo.height) {
       np = [np[0].replace("b", "t"), np[1].replace("t", "b")];
     }
@@ -236,24 +284,25 @@ function getNewPlacement(l: number, t: number, p: placementType, staticInfo: any
   // 超出区域
   if (l + overlayInfo.width > containerInfo.width) {
     // [右边 => 左边, 左对齐 => 右对齐]
-    np = [np[0].replace('r', 'l'), np[1].replace('l', 'r')];
+    np = [np[0].replace("r", "l"), np[1].replace("l", "r")];
+    //超出区域被隐藏
     if (targetInfo.left + targetInfo.width < overlayInfo.width) {
       np = [np[0], np[1].replace("r", "l")];
     }
+    //超出区域 箭头指向中心 例如placement显示b而不是bc
     if (np[0] === "" && (np[1].indexOf("b") > -1 || np[1].indexOf("t") > -1)) {
       np = [np[0].replace("", "l"), np[1]];
     }
     if (np[1] === "" && (np[0].indexOf("b") > -1 || np[0].indexOf("t") > -1)) {
       np = [np[0], np[1].replace("", "l")];
     }
-
   }
 
-  return np.join('') as placementType;
+  return np.join("") as placementType;
 }
 
 function ajustLeftAndTop(l: number, t: number, staticInfo: any) {
-  const { overlayInfo, containerInfo, targetInfo} = staticInfo;
+  const { overlayInfo, containerInfo, targetInfo } = staticInfo;
   if (t < 0) {
     t = 0;
   }
@@ -263,6 +312,7 @@ function ajustLeftAndTop(l: number, t: number, staticInfo: any) {
   if (t + overlayInfo.height > containerInfo.height) {
     t = containerInfo.height - overlayInfo.height;
   }
+  //超出区域被隐藏
   if (
     t < overlayInfo.height &&
     overlayInfo.height + targetInfo.height > containerInfo.height
@@ -276,9 +326,11 @@ function ajustLeftAndTop(l: number, t: number, staticInfo: any) {
   }
   if (l + overlayInfo.width > containerInfo.width) {
     l = containerInfo.width - overlayInfo.width;
+    //left边界值为0
     if (targetInfo.left === 0) {
       l = 0;
     }
+    //超出区域被隐藏
     if (l < overlayInfo.width && containerInfo.width < overlayInfo.width) {
       if (targetInfo.width + targetInfo.left < overlayInfo.width) {
         l = targetInfo.left;
@@ -287,21 +339,21 @@ function ajustLeftAndTop(l: number, t: number, staticInfo: any) {
         l = containerInfo.width - overlayInfo.width;
       }
     }
-
   }
   return {
     left: l,
-    top: t
-  }
+    top: t,
+  };
 }
-
 
 /**
  * 计算相对于 container 的偏移位置
- * @param config 
- * @returns 
+ * @param config
+ * @returns
  */
-export default function getPlacements(config: PlacementsConfig): PositionResult {
+export default function getPlacements(
+  config: PlacementsConfig
+): PositionResult {
   const {
     target,
     overlay,
@@ -309,9 +361,9 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
     scrollNode,
     placement: oplacement,
     placementOffset = 0,
-    points: opoints = ['tl', 'bl'],
+    points: opoints = ["tl", "bl"],
     offset = [0, 0],
-    position = 'absolute',
+    position = "absolute",
     beforePosition,
     autoAdjust = true,
     autoHideScrollOverflow = true,
@@ -322,17 +374,17 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
 
   /**
    * 可视窗口是浏览器给用户展示的窗口
-   * getBoundingClientRect(): top/left 是相对 viewport 
+   * getBoundingClientRect(): top/left 是相对 viewport
    * node: offsetTop/offsetarget.Left 是相对 parent 元素的
-   * 
+   *
    * top: 元素上边  距离可视窗口 上边框的距离
    * left: 元素左边 距离可视窗口 左边框的距离
-   * 
+   *
    * scrollTop: 容器上下滚动距离
    * scrollLeft: 容器左右滚动距离
    */
-   const { width: owidth, height: oheight } = getWidthHeight(overlay);
-   if (position === 'fixed') {
+  const { width: owidth, height: oheight } = getWidthHeight(overlay);
+  if (position === "fixed") {
     const result = <PositionResult>{
       config: {
         placement: undefined,
@@ -342,34 +394,52 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
         position,
         left: offset[0],
         top: offset[1],
-      }
+      },
     };
 
     if (beforePosition && typeof beforePosition) {
       return beforePosition(result, {
         overlay: {
           node: overlay,
-          width: owidth, height: oheight
-        }
+          width: owidth,
+          height: oheight,
+        },
       });
     }
 
     return result;
   }
 
-  const { width: twidth, height: theight, left: tleft, top: ttop } = target.getBoundingClientRect();
+  const {
+    width: twidth,
+    height: theight,
+    left: tleft,
+    top: ttop,
+  } = target.getBoundingClientRect();
   const { left: cleft, top: ctop } = getViewTopLeft(container);
-  const { scrollWidth: cwidth, scrollHeight: cheight, scrollTop: cscrollTop, scrollLeft: cscrollLeft } = container;
+  const {
+    scrollWidth: cwidth,
+    scrollHeight: cheight,
+    scrollTop: cscrollTop,
+    scrollLeft: cscrollLeft,
+  } = container;
 
   const staticInfo = {
     targetInfo: { width: twidth, height: theight, left: tleft, top: ttop },
-    containerInfo: { left: cleft, top: ctop, width: cwidth, height: cheight, scrollTop: cscrollTop, scrollLeft: cscrollLeft },
+    containerInfo: {
+      left: cleft,
+      top: ctop,
+      width: cwidth,
+      height: cheight,
+      scrollTop: cscrollTop,
+      scrollLeft: cscrollLeft,
+    },
     overlayInfo: { width: owidth, height: oheight },
     points: opoints,
     placementOffset,
     offset,
     container,
-    rtl
+    rtl,
   };
 
   // step1: 根据 placement 计算位置
@@ -379,19 +449,32 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
   const viewport = getViewPort(container);
   // step2: 根据 viewport（挂载容器不一定是可视区, eg: 挂载在父节点，但是弹窗超出父节点）重新计算位置. 根据可视区域优化位置
   // 位置动态优化思路见 https://github.com/alibaba-fusion/overlay/issues/2
-  if (autoAdjust && placement && shouldResizePlacement(left, top, viewport, staticInfo)) {
+  if (
+    autoAdjust &&
+    placement &&
+    shouldResizePlacement(left, top, viewport, staticInfo)
+  ) {
     const nplacement = getNewPlacement(left, top, placement, staticInfo);
     // step2: 空间不够，替换位置重新计算位置
     if (placement !== nplacement) {
       let { left: nleft, top: ntop } = getXY(nplacement, staticInfo);
 
       if (shouldResizePlacement(nleft, ntop, viewport, staticInfo)) {
-        const nnplacement = getNewPlacement(nleft, ntop, nplacement, staticInfo);
+        const nnplacement = getNewPlacement(
+          nleft,
+          ntop,
+          nplacement,
+          staticInfo
+        );
         // step3: 空间依然不够，说明xy轴至少有一个方向是怎么更换位置都不够的。停止计算开始补偿逻辑
         if (nplacement !== nnplacement) {
           let { left: nnleft, top: nntop } = getXY(nnplacement, staticInfo);
 
-          const { left: nnnleft, top: nnntop } = ajustLeftAndTop(nnleft, nntop, staticInfo);
+          const { left: nnnleft, top: nnntop } = ajustLeftAndTop(
+            nnleft,
+            nntop,
+            staticInfo
+          );
 
           placement = nnplacement;
           left = nnnleft;
@@ -422,7 +505,7 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
       position,
       left: Math.round(left),
       top: Math.round(top),
-    }
+    },
   };
 
   /**
@@ -435,12 +518,17 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
     // result.style.left = 0;
     // result.style.top = 0;
 
-    scrollNode.forEach(node => {
+    scrollNode.forEach((node) => {
       const { top, left, width, height } = node.getBoundingClientRect();
-      if (ttop + theight < top || ttop > top + height || tleft + twidth < left || tleft > left + width) {
-        result.style.display = 'none';
+      if (
+        ttop + theight < top ||
+        ttop > top + height ||
+        tleft + twidth < left ||
+        tleft > left + width
+      ) {
+        result.style.display = "none";
       } else {
-        result.style.display = '';
+        result.style.display = "";
       }
     });
   }
@@ -449,12 +537,16 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
     return beforePosition(result, {
       target: {
         node: target,
-        width: twidth, height: theight, left: tleft, top: ttop
+        width: twidth,
+        height: theight,
+        left: tleft,
+        top: ttop,
       },
       overlay: {
         node: overlay,
-        width: owidth, height: oheight
-      }
+        width: owidth,
+        height: oheight,
+      },
     });
   }
 
