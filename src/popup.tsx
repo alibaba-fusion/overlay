@@ -1,14 +1,13 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { findDOMNode } from 'react-dom';
-import { CSSProperties, ReactElement } from 'react';
+import type { CSSProperties, ReactElement } from 'react';
 
 import Overlay, { OverlayEvent, RefWrapper } from './overlay';
 import { placementType } from './placement';
 import { makeChain, saveRef } from './utils';
 
 type TriggerType = 'click' | 'hover' | 'focus';
-export type TriggerTypes = Array<TriggerType>;
-
+export type TriggerTypes = TriggerType[];
 
 export interface PopupProps {
   /**
@@ -17,7 +16,7 @@ export interface PopupProps {
   overlay: ReactElement;
 
   triggerType?: TriggerTypes | TriggerType;
-  triggerClickKeyCode?: number | Array<number>;
+  triggerClickKeyCode?: number | number[];
   container?: (ele: Element) => Element;
 
   placement?: placementType;
@@ -56,8 +55,8 @@ export interface PopupProps {
    */
   autoAdjust?: boolean;
   /**
-  * 滚动超出的时候隐藏
-  */
+   * 滚动超出的时候隐藏
+   */
   autoHideScrollOverflow?: boolean;
   followTrigger?: boolean;
   canCloseByEsc?: boolean;
@@ -78,10 +77,10 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     children,
     defaultVisible,
     className,
-    onVisibleChange = () => { },
+    onVisibleChange = () => {},
     container = body,
     style = {},
-    placement = "bl",
+    placement = 'bl',
     canCloseByTrigger = true,
     delay = 200,
     overlayProps = {},
@@ -108,11 +107,11 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     }
   }, [props.visible]);
 
-  const handleVisibleChange = (visible: boolean, e: OverlayEvent, triggerType: string = 'fromTrigger') => {
+  const handleVisibleChange = (visible: boolean, e: OverlayEvent, triggerType = 'fromTrigger') => {
     if (disabled) {
       return;
     }
-    
+
     if (!('visible' in props)) {
       if (visible || overlayRef.current) {
         setVisible(visible);
@@ -120,21 +119,23 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     }
 
     onVisibleChange(visible, triggerType, e);
-  }
+  };
 
   const handleClick = (e: OverlayEvent) => {
     if (visible && !canCloseByTrigger) {
       return;
     }
     handleVisibleChange(!visible, e); // todo: rename to trigger in 1.x
-  }
+  };
 
   const handleKeyDown = (e: OverlayEvent) => {
-    const keycodes = Array.isArray(triggerClickKeyCode) ? triggerClickKeyCode : [triggerClickKeyCode];
+    const keycodes = Array.isArray(triggerClickKeyCode)
+      ? triggerClickKeyCode
+      : [triggerClickKeyCode];
     if (keycodes.includes(e.keyCode)) {
       handleVisibleChange(!visible, e); // todo: rename to trigger in 1.x
     }
-  }
+  };
 
   const handleMouseEnter = (targetType: string) => {
     return (e: OverlayEvent) => {
@@ -150,8 +151,8 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
           mouseEnterTimer.current = null;
         }, delay);
       }
-    }
-  }
+    };
+  };
 
   const handleMouseLeave = (targetType: string) => {
     return (e: OverlayEvent) => {
@@ -166,46 +167,59 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
         clearTimeout(mouseEnterTimer.current);
         mouseEnterTimer.current = null;
       }
-    }
-  }
+    };
+  };
 
   const handleFocus = (e: OverlayEvent) => {
     handleVisibleChange(true, e);
-  }
+  };
   const handleBlur = (e: OverlayEvent) => {
     if (overlayClick.current) {
       overlayClick.current = false;
       return;
     }
     handleVisibleChange(false, e);
-  }
+  };
 
   // 点击弹窗的时候不能被 onBlur 关闭
   const handleOverlayClick = (e: OverlayEvent) => {
     overlayClick.current = true;
-  }
+  };
 
   const handleRequestClose = (targetType: string, e: OverlayEvent) => {
     handleVisibleChange(false, e, targetType);
-  }
+  };
 
   const triggerProps: any = {};
   const overlayOtherProps: any = {};
   const safeNodes = Array.isArray(safeNode) ? safeNode : [safeNode];
 
   if (child && !disabled) {
-    const triggerTypeList: TriggerTypes = typeof triggerType === 'string' ? [triggerType] : triggerType;
-    triggerTypeList.forEach(t => {
+    const triggerTypeList: TriggerTypes =
+      typeof triggerType === 'string' ? [triggerType] : triggerType;
+    triggerTypeList.forEach((t) => {
       switch (t) {
         case 'click':
           triggerProps.onClick = makeChain(handleClick, child.props?.onClick);
           triggerProps.onKeyDown = makeChain(handleKeyDown, child.props?.onKeyDown);
           break;
         case 'hover':
-          triggerProps.onMouseEnter = makeChain(handleMouseEnter('fromTrigger'), child.props?.onMouseEnter);
-          triggerProps.onMouseLeave = makeChain(handleMouseLeave('fromTrigger'), child.props?.onMouseLeave);
-          overlayOtherProps.onMouseEnter = makeChain(handleMouseEnter('overlay'), overlayProps.onMouseEnter);
-          overlayOtherProps.onMouseLeave = makeChain(handleMouseLeave('overlay'), overlayProps.onMouseLeave);
+          triggerProps.onMouseEnter = makeChain(
+            handleMouseEnter('fromTrigger'),
+            child.props?.onMouseEnter
+          );
+          triggerProps.onMouseLeave = makeChain(
+            handleMouseLeave('fromTrigger'),
+            child.props?.onMouseLeave
+          );
+          overlayOtherProps.onMouseEnter = makeChain(
+            handleMouseEnter('overlay'),
+            overlayProps.onMouseEnter
+          );
+          overlayOtherProps.onMouseLeave = makeChain(
+            handleMouseLeave('overlay'),
+            overlayProps.onMouseLeave
+          );
           break;
         case 'focus':
           triggerProps.onFocus = makeChain(handleFocus, child.props?.onFocus);
@@ -219,30 +233,41 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     safeNodes.push(() => findDOMNode(triggerRef.current) as HTMLElement);
   }
 
-  const target = otarget? otarget : (child ? () => findDOMNode(triggerRef.current) : body);
-  const getContainer = typeof container === 'string' ? () => document.getElementById(container) :
-    typeof container !== 'function' ? () => container : () => container(findDOMNode(triggerRef.current) as HTMLElement);
-  const overlayContainer = followTrigger ? () => findDOMNode(triggerRef.current)?.parentNode : getContainer;
+  const target = otarget || (child ? () => findDOMNode(triggerRef.current) : body);
+  const getContainer =
+    typeof container === 'string'
+      ? () => document.getElementById(container)
+      : typeof container !== 'function'
+        ? () => container
+        : () => container(findDOMNode(triggerRef.current) as HTMLElement);
+  const overlayContainer = followTrigger
+    ? () => findDOMNode(triggerRef.current)?.parentNode
+    : getContainer;
 
   // triggerRef 可能会更新，等计算的时候再通过 findDOMNode 取真实值
-  return <>
-    {child && <RefWrapper ref={useCallback(ref => triggerRef.current = ref, [])}>
-      {React.cloneElement(child, triggerProps)}
-    </RefWrapper>}
-    <Overlay
-      {...others}
-      {...overlayOtherProps}
-      placement={placement}
-      container={overlayContainer}
-      safeNode={safeNodes}
-      visible={visible}
-      target={target}
-      onRequestClose={handleRequestClose}
-      ref={useCallback(makeChain(saveRef(overlayRef), saveRef(ref)), [])}
-    >
-      {overlayChild}
-    </Overlay>
-  </>
+  const refWrapperRef = useCallback((ref) => {
+    triggerRef.current = ref;
+  }, []);
+  return (
+    <>
+      {child && (
+        <RefWrapper ref={refWrapperRef}>{React.cloneElement(child, triggerProps)}</RefWrapper>
+      )}
+      <Overlay
+        {...others}
+        {...overlayOtherProps}
+        placement={placement}
+        container={overlayContainer}
+        safeNode={safeNodes}
+        visible={visible}
+        target={target}
+        onRequestClose={handleRequestClose}
+        ref={useCallback(makeChain(saveRef(overlayRef), saveRef(ref)), [])}
+      >
+        {overlayChild}
+      </Overlay>
+    </>
+  );
 });
 
 export default Popup;

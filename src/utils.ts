@@ -1,7 +1,13 @@
 import { useEffect, useRef, useLayoutEffect, useCallback } from 'react';
 import { findDOMNode } from 'react-dom';
 
-export function useListener(nodeList: HTMLElement | HTMLElement[], eventName: string, callback: EventListenerOrEventListenerObject, useCapture: boolean, condition: boolean) {
+export function useListener(
+  nodeList: HTMLElement | HTMLElement[],
+  eventName: string,
+  callback: EventListenerOrEventListenerObject,
+  useCapture: boolean,
+  condition: boolean
+) {
   useEffect(() => {
     if (condition) {
       if (!Array.isArray(nodeList)) {
@@ -12,16 +18,18 @@ export function useListener(nodeList: HTMLElement | HTMLElement[], eventName: st
       });
 
       return () => {
-        Array.isArray(nodeList) && nodeList.forEach((n) => {
-          n && n.removeEventListener && n.removeEventListener(eventName, callback, useCapture || false);
-        });
+        Array.isArray(nodeList) &&
+          nodeList.forEach((n) => {
+            n &&
+              n.removeEventListener &&
+              n.removeEventListener(eventName, callback, useCapture || false);
+          });
       };
     }
 
     return undefined;
   }, [condition]);
 }
-
 
 /**
  * 将N个方法合并为一个链式调用的方法
@@ -80,7 +88,7 @@ export function saveRef(ref: any) {
  * @returns
  */
 export const getRelativeContainer = (container: HTMLElement) => {
-  if (typeof document === undefined) {
+  if (typeof document === 'undefined') {
     return container;
   }
 
@@ -104,7 +112,7 @@ export const getRelativeContainer = (container: HTMLElement) => {
  * @returns
  */
 export const getOverflowNodes = (targetNode: HTMLElement, container: HTMLElement) => {
-  if (typeof document === undefined) {
+  if (typeof document === 'undefined') {
     return [];
   }
 
@@ -114,10 +122,12 @@ export const getOverflowNodes = (targetNode: HTMLElement, container: HTMLElement
 
   while (true) {
     // 忽略 body/documentElement, 不算额外滚动元素
-    if (!calcContainer
-            || calcContainer === container
-            || calcContainer === document.body
-            || calcContainer === document.documentElement) {
+    if (
+      !calcContainer ||
+      calcContainer === container ||
+      calcContainer === document.body ||
+      calcContainer === document.documentElement
+    ) {
       break;
     }
 
@@ -167,7 +177,11 @@ export function getStyle(elt: Element, name: string) {
 
 const PIXEL_PATTERN = /margin|padding|width|height|max|min|offset|size|top|left/i;
 
-export function setStyle(node: HTMLElement, name: string | { [key: string]: unknown } | React.CSSProperties, value?: string) {
+export function setStyle(
+  node: HTMLElement,
+  name: string | { [key: string]: unknown } | React.CSSProperties,
+  value?: string
+) {
   if (!node) {
     return;
   }
@@ -217,9 +231,9 @@ export function debounce(func: Function, wait: number) {
  */
 export function getViewTopLeft(node: HTMLElement) {
   /**
-     * document.body 向下滚动后 scrollTop 一直为0，同时 top=-xx 为负数，相当于本身是没有滚动条的，这个逻辑是正确的。
-     * document.documentElement 向下滚动后 scrollTop/top 都在变化，会影响计算逻辑，所以这里写死 0
-     */
+   * document.body 向下滚动后 scrollTop 一直为0，同时 top=-xx 为负数，相当于本身是没有滚动条的，这个逻辑是正确的。
+   * document.documentElement 向下滚动后 scrollTop/top 都在变化，会影响计算逻辑，所以这里写死 0
+   */
   if (node === document.documentElement) {
     return {
       top: 0,
@@ -248,7 +262,7 @@ export function getWidthHeight(element: HTMLElement) {
       height: element.offsetHeight,
     };
   } else {
-    const { width, height } = element.getBoundingClientRect();
+    const { width, height } = (element as HTMLElement).getBoundingClientRect();
 
     return {
       width,
@@ -290,10 +304,7 @@ function _isVisible(node: HTMLElement) {
     if (node === document.body || node === document.documentElement) {
       break;
     }
-    if (
-      node.style.display === 'none' ||
-            node.style.visibility === 'hidden'
-    ) {
+    if (node.style.display === 'none' || node.style.visibility === 'hidden') {
       return false;
     }
     node = node.parentNode as HTMLElement;

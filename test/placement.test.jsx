@@ -9,7 +9,7 @@ function mockElement(object) {
     ...object,
     getBoundingClientRect: () => object,
     nodeType: 1,
-  }
+  };
 }
 
 const target = mockElement({
@@ -29,7 +29,7 @@ const container = mockElement({
   scrollHeight: 200,
   scrollTop: 0,
   scrollLeft: 0,
-  overflow: 'auto'
+  overflow: 'auto',
 });
 const overlay = mockElement({
   width: 200,
@@ -39,10 +39,10 @@ const overlay = mockElement({
 window.getComputedStyle = (node) => {
   return {
     getPropertyValue: (name) => {
-      return node[name]
-    }
-  }
-}
+      return node[name];
+    },
+  };
+};
 
 describe('utils', () => {
   it('mock getStyle', () => {
@@ -50,8 +50,8 @@ describe('utils', () => {
   });
   it('mock getViewPort', () => {
     expect(getViewPort(container, 'overflow')).toBe(container);
-  })
-})
+  });
+});
 
 describe('placement', () => {
   it('should support placement=bl', () => {
@@ -61,7 +61,7 @@ describe('placement', () => {
       overlay,
       placement: 'bl',
       autoAdjust: false,
-    }
+    };
 
     const result = getPlacements(config);
 
@@ -76,7 +76,7 @@ describe('placement', () => {
       overlay,
       placement: 'tl',
       autoAdjust: false,
-    }
+    };
 
     const result = getPlacements(config);
 
@@ -97,7 +97,7 @@ describe('placement', () => {
       overlay,
       placement: 'tr',
       autoAdjust: false,
-    }
+    };
 
     const result = getPlacements(config);
 
@@ -117,11 +117,11 @@ describe('placement', () => {
       overlay,
       placement: 't',
       autoAdjust: false,
-    }
+    };
 
     const result = getPlacements(config);
 
-    expect(result.style.left).toBe(target.left + target.width/2 - overlay.width/2);
+    expect(result.style.left).toBe(target.left + target.width / 2 - overlay.width / 2);
     expect(result.style.top).toBe(target.top - overlay.height);
 
     config.autoAdjust = true;
