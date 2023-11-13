@@ -68,10 +68,10 @@
   "license": "MIT",
   "homepage": "https://unpkg.com/@alifd/overlay@0.2.13/build/index.html",
   "lint-staged": {
-    "@(src|scripts|docs/*/demo)/**/*.@(js|jsx|ts|tsx)": [
+    "@(src|scripts|docs/*/demo)/**/*.@(js|jsx|ts|tsx|md)": [
       "prettier --write"
     ],
-    "@(src|scripts|docs/*/demo)/**/*.@(js|jsx|ts|tsx|md)": [
+    "src/**/*.@(js|jsx|ts|tsx)": [
       "eslint",
       "git add"
     ],
