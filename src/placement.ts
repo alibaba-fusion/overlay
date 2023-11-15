@@ -136,6 +136,7 @@ function getXY(p: placementType | undefined, staticInfo: any) {
       case 'r':
         basex += plus * width;
         break;
+      // no default
     }
   }
 
@@ -151,6 +152,7 @@ function getXY(p: placementType | undefined, staticInfo: any) {
       case 'b':
         basey += plus * height;
         break;
+      // no default
     }
   }
 
@@ -193,6 +195,7 @@ function getXY(p: placementType | undefined, staticInfo: any) {
       case 'r':
         basex += placementOffset;
         break;
+      // no default
     }
   }
 
@@ -229,58 +232,204 @@ function shouldResizePlacement(l: number, t: number, viewport: HTMLElement, stat
   );
 }
 
-function getNewPlacement(l: number, t: number, p: placementType, staticInfo: any) {
+function getNewPlacements(
+  l: number,
+  t: number,
+  p: placementType,
+  staticInfo: any
+): placementType[] {
   const { overlayInfo, containerInfo } = staticInfo;
+  const npArr: string[] = [];
+  const [direction, align = ''] = p.split('');
 
-  let np = p.split('');
-  if (np.length === 1) {
-    np.push('');
-  }
+  const topOut = t < 0;
+  const leftOut = l < 0;
+  const rightOut = l + overlayInfo.width > containerInfo.width;
+  const bottomOut = t + overlayInfo.height > containerInfo.height;
+  const outNumber = [topOut, leftOut, rightOut, bottomOut].filter(Boolean).length;
+  const preferHoz = ['l', 'r'].includes(direction);
 
-  // 区域不够
-  if (t < 0) {
-    // [上边 => 下边, 底部对齐 => 顶部对齐]
-    np = [np[0].replace('t', 'b'), np[1].replace('b', 't')];
-  }
-  // 区域不够
-  if (l < 0) {
-    // [左边 => 右边, 右对齐 => 左对齐]
-    np = [np[0].replace('l', 'r'), np[1].replace('r', 'l')];
-  }
-  // 超出区域
-  if (t + overlayInfo.height > containerInfo.height) {
-    // [下边 => 上边, 顶部对齐 => 底部对齐]
-    np = [np[0].replace('b', 't'), np[1].replace('t', 'b')];
-  }
-  // 超出区域
-  if (l + overlayInfo.width > containerInfo.width) {
-    // [右边 => 左边, 左对齐 => 右对齐]
-    np = [np[0].replace('r', 'l'), np[1].replace('l', 'r')];
-  }
+  const push = (...ps: string[]) => npArr.push(...ps);
+  switch (outNumber) {
+    case 0:
+    case 4: {
+      // 任意placement都不可能四面超出
+      // 四侧超出或未超出，不处理
+      return null;
+    }
+    case 3: {
+      if (topOut && leftOut && rightOut) {
+        // 左上右超出, try b
+        push('b', 'bl', 'br');
+      }
+      if (topOut && leftOut && bottomOut) {
+        // 左上下超出, try r
+        push('r', 'rt', 'rb');
+      }
+      if (topOut && rightOut && bottomOut) {
+        // 上右下超出, try l
+        push('l', 'lt', 'lb');
+      }
 
-  return np.join('') as placementType;
+      if (bottomOut && leftOut && rightOut) {
+        // 左下右超出, try t
+        push('t', 'tl', 'tr');
+      }
+      break;
+    }
+    case 2: {
+      if (topOut && leftOut) {
+        // 左上超出, try bl rt
+        push('bl', 'rt');
+      }
+      if (topOut && rightOut) {
+        // 右上超出, try br lt
+        push('br', 'lt');
+      }
+      if (rightOut && bottomOut) {
+        // 右下超出, try tr lb
+        push('tr', 'lb');
+      }
+      if (leftOut && bottomOut) {
+        // 左下超出, try tl rb
+        push('tl', 'rb');
+      }
+      break;
+    }
+    case 1: {
+      if (topOut) {
+        if (align) {
+          push(direction.replace('t', 'b') + align.replace('b', 't'));
+        } else {
+          push('lt', 'rt', 'b');
+        }
+      }
+      if (leftOut) {
+        if (align) {
+          push(direction.replace('l', 'r') + align.replace('r', 'l'));
+        } else {
+          push('tl', 'bl', 'r');
+        }
+      }
+      if (bottomOut) {
+        if (align) {
+          push(direction.replace('b', 't') + align.replace('t', 'b'));
+        } else {
+          push('lb', 'rb', 't');
+        }
+      }
+      if (rightOut) {
+        if (align) {
+          push(direction.replace('r', 'l') + align.replace('l', 'r'));
+        } else {
+          push('tr', 'br', 'l');
+        }
+      }
+      break;
+    }
+    // no default
+  }
+  const hozGroup = direction === 'l' ? ['l', 'r'] : ['r', 'l'];
+  const verGroup = direction === 't' ? ['t', 'b'] : ['b', 't'];
+  const hozOrders = hozGroup.concat(verGroup);
+  const verOrders = verGroup.concat(hozGroup);
+  const orders = preferHoz ? hozOrders : verOrders;
+  npArr.sort((a, b) => {
+    return orders.indexOf(a[0]) - orders.indexOf(b[0]);
+  });
+  return npArr as placementType[];
 }
 
-function ajustLeftAndTop(l: number, t: number, staticInfo: any) {
+function getBackupPlacement(
+  l: number,
+  t: number,
+  p: placementType,
+  staticInfo: any
+): placementType | null {
   const { overlayInfo, containerInfo } = staticInfo;
+  const [direction, align] = p.split('');
 
-  if (t < 0) {
-    t = 0;
+  const topOut = t < 0;
+  const leftOut = l < 0;
+  const rightOut = l + overlayInfo.width > containerInfo.width;
+  const bottomOut = t + overlayInfo.height > containerInfo.height;
+  const outNumber = [topOut, leftOut, rightOut, bottomOut].filter(Boolean).length;
+
+  if (outNumber === 3) {
+    // 三面超出，则使用未超出的方向
+    const maps: Array<{ direction: string; value: boolean }> = [
+      { direction: 't', value: topOut },
+      { direction: 'r', value: rightOut },
+      { direction: 'b', value: bottomOut },
+      { direction: 'l', value: leftOut },
+    ];
+    const backDirection = maps.find((t) => !t.value)?.direction;
+    // 若原来的方向跟调整后不一致，则使用调整后的
+    if (backDirection && backDirection !== direction) {
+      return backDirection as placementType;
+    }
   }
-  if (l < 0) {
-    l = 0;
-  }
-  if (t + overlayInfo.height > containerInfo.height) {
-    t = containerInfo.height - overlayInfo.height;
-  }
-  if (l + overlayInfo.width > containerInfo.width) {
-    l = containerInfo.width - overlayInfo.width;
+  return null;
+}
+
+function autoAdjustPosition(
+  l: number,
+  t: number,
+  p: placementType,
+  staticInfo: any
+): { left: number; top: number; placement: placementType } | null {
+  let left = l;
+  let top = t;
+  const { overlayInfo, targetInfo, viewport } = staticInfo;
+  let { container, containerInfo } = staticInfo;
+  const { width: oWidth, height: oHeight } = overlayInfo;
+  const { width: tWidth, height: tHeight } = targetInfo;
+  const { width: cWidth, height: cHeight, left: cLeft, top: cTop } = containerInfo;
+
+  // 若容器空间不足以支撑overlay + target，则使用viewport作为参考调整内容
+  if (viewport !== container && oWidth + tWidth > cWidth && oHeight + tHeight > cHeight) {
+    left += cLeft;
+    top += cTop;
+    container = viewport;
+    const { left: vLeft, top: vTop } = getViewTopLeft(viewport);
+    containerInfo = {
+      width: viewport.clientWidth || viewport.offsetWidth,
+      height: viewport.clientHeight || viewport.offsetHeight,
+      left: vLeft,
+      top: vTop,
+    };
   }
 
-  return {
-    left: l,
-    top: t,
-  };
+  if (!shouldResizePlacement(left, top, viewport, staticInfo)) {
+    return null;
+  }
+
+  // 根据位置超出情况，获取所有可以尝试的位置列表
+  const placements = getNewPlacements(left, top, p, staticInfo);
+  // 按顺序寻找能够容纳的位置
+  for (const placement of placements) {
+    const { left: nLeft, top: nTop } = getXY(placement, staticInfo);
+    if (!shouldResizePlacement(nLeft, nTop, viewport, staticInfo)) {
+      return {
+        left: nLeft,
+        top: nTop,
+        placement,
+      };
+    }
+  }
+
+  const backupPlacement = getBackupPlacement(left, top, p, staticInfo);
+
+  if (backupPlacement) {
+    const { left: nLeft, top: nTop } = getXY(backupPlacement, staticInfo);
+    return {
+      left: nLeft,
+      top: nTop,
+      placement: backupPlacement,
+    };
+  }
+
+  return null;
 }
 
 /**
@@ -354,6 +503,9 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
     scrollLeft: cscrollLeft,
   } = container;
 
+  // 获取可视区域，来计算容器相对位置
+  const viewport = getViewPort(container);
+
   const staticInfo = {
     targetInfo: { width: twidth, height: theight, left: tleft, top: ttop },
     containerInfo: {
@@ -370,48 +522,22 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
     offset,
     container,
     rtl,
+    viewport,
   };
 
   // step1: 根据 placement 计算位置
   let { left, top, points } = getXY(placement, staticInfo);
 
-  // 获取可视区域，来计算容器相对位置
-  const viewport = getViewPort(container);
-
   // step2: 根据 viewport（挂载容器不一定是可视区, eg: 挂载在父节点，但是弹窗超出父节点）重新计算位置. 根据可视区域优化位置
   // 位置动态优化思路见 https://github.com/alibaba-fusion/overlay/issues/2
   if (autoAdjust && placement && shouldResizePlacement(left, top, viewport, staticInfo)) {
-    const nplacement = getNewPlacement(left, top, placement, staticInfo);
-    // step2: 空间不够，替换位置重新计算位置
-    if (placement !== nplacement) {
-      const { left: nleft, top: ntop } = getXY(nplacement, staticInfo);
+    const adjustResult = autoAdjustPosition(left, top, placement, staticInfo);
 
-      if (shouldResizePlacement(nleft, ntop, viewport, staticInfo)) {
-        const nnplacement = getNewPlacement(nleft, ntop, nplacement, staticInfo);
-        // step3: 空间依然不够，说明xy轴至少有一个方向是怎么更换位置都不够的。停止计算开始补偿逻辑
-        if (nplacement !== nnplacement) {
-          const { left: nnleft, top: nntop } = getXY(nnplacement, staticInfo);
-
-          const { left: nnnleft, top: nnntop } = ajustLeftAndTop(nnleft, nntop, staticInfo);
-
-          placement = nnplacement;
-          left = nnnleft;
-          top = nnntop;
-        } else {
-          placement = nplacement;
-          left = nleft;
-          top = ntop;
-        }
-      } else {
-        placement = nplacement;
-        left = nleft;
-        top = ntop;
-      }
+    if (adjustResult) {
+      left = adjustResult.left;
+      top = adjustResult.top;
+      placement = adjustResult.placement;
     }
-
-    const { left: nleft, top: ntop } = ajustLeftAndTop(left, top, staticInfo);
-    left = nleft;
-    top = ntop;
   }
 
   const result: PositionResult = {

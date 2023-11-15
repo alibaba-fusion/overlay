@@ -153,15 +153,25 @@ export const getOverflowNodes = (targetNode: HTMLElement, container: HTMLElement
 export function getViewPort(container: HTMLElement) {
   let calcContainer: HTMLElement = container;
 
+  const isPositionContainer = ['fixed', 'absolute'].includes(getStyle(container, 'position'));
+
   while (calcContainer) {
     const overflow = getStyle(calcContainer, 'overflow');
+    // 若遇到滚动容器
     if (overflow?.match(/auto|scroll|hidden/)) {
-      return calcContainer;
+      // 若元素不是绝对定位元素，或滚动容器也是绝对定位元素，则使用改滚动容器作为视口
+      if (
+        !isPositionContainer ||
+        ['fixed', 'absolute'].includes(getStyle(calcContainer, 'position'))
+      ) {
+        return calcContainer;
+      }
     }
 
     calcContainer = calcContainer.parentNode as HTMLElement;
   }
 
+  // 其他情况均使用根节点作为视口
   return document.documentElement;
 }
 
