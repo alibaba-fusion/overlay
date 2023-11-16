@@ -159,7 +159,7 @@ export function getViewPort(container: HTMLElement) {
     const overflow = getStyle(calcContainer, 'overflow');
     // 若遇到滚动容器
     if (overflow?.match(/auto|scroll|hidden/)) {
-      // 若元素不是绝对定位元素，或滚动容器也是绝对定位元素，则使用改滚动容器作为视口
+      // 若 container 不是绝对定位，或者滚动容器也是也对定位，没有跳出滚动容器，使用滚动容器作为可视区域
       if (
         !isPositionContainer ||
         ['fixed', 'absolute'].includes(getStyle(calcContainer, 'position'))
@@ -171,7 +171,7 @@ export function getViewPort(container: HTMLElement) {
     calcContainer = calcContainer.parentNode as HTMLElement;
   }
 
-  // 其他情况均使用根节点作为视口
+  // 其他情况均使用浏览器的可视区域
   return document.documentElement;
 }
 

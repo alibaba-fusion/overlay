@@ -529,7 +529,7 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
   let { left, top, points } = getXY(placement, staticInfo);
 
   // step2: 根据 viewport（挂载容器不一定是可视区, eg: 挂载在父节点，但是弹窗超出父节点）重新计算位置. 根据可视区域优化位置
-  // 位置动态优化思路见 https://github.com/alibaba-fusion/overlay/issues/2
+  // 位置动态优化思路见 https://github.com/alibaba-fusion/overlay/issues/23
   if (autoAdjust && placement && shouldResizePlacement(left, top, viewport, staticInfo)) {
     const adjustResult = autoAdjustPosition(left, top, placement, staticInfo);
 
