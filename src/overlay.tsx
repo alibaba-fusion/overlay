@@ -295,9 +295,12 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
         });
 
         const waitTime = 100;
-        ro.current = new ResizeObserver(throttle(updatePosition, waitTime));
+        const throttledUpdatePosition = throttle(updatePosition, waitTime);
+        ro.current = new ResizeObserver(throttledUpdatePosition);
         ro.current.observe(containerNode);
         ro.current.observe(node);
+        // fist call, 不依赖 ResizeObserver observe时的首次执行(测试环境不会执行)，因为 throttle 原因也不会执行两次
+        throttledUpdatePosition();
 
         forceUpdate({});
 
