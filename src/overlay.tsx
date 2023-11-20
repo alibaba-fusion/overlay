@@ -257,7 +257,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
 
     if (!isSameObject(positionStyleRef.current, placements.style)) {
       positionStyleRef.current = placements.style;
-      setStyle(overlayNode, placements.style);
+      setStyle(overlayNode, { ...placements.style, visibility: '' });
       typeof onPosition === 'function' && onPosition(placements);
     }
   });
@@ -268,7 +268,6 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
       const node = findDOMNode(nodeRef) as HTMLElement;
       overlayRef.current = node;
       callRef(ref, node);
-
       if (node !== null && container) {
         const containerNode = getRelativeContainer(getHTMLElement(container));
         containerRef.current = containerNode;
@@ -285,11 +284,18 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
         overflowRef.current = getOverflowNodes(targetNode, containerNode);
 
         // 1. 这里提前先设置好 position 属性，因为有的节点可能会因为设置了 position 属性导致宽度变小
-        // 2. 提前设置 top/left -1000 先把弹窗藏起来，以免影响了 container 的高度计算
-        setStyle(node, { position: fixed ? 'fixed' : 'absolute', top: -1000, left: -1000 });
+        // 2. 设置 visibility 先把弹窗藏起来，避免影响视图
+        // 3. 因为未知原因，原先 left&top 设置为 -1000的方式隐藏会导致获取到的overlay元素宽高不对，所以这里使用 visibility 方式处理
+        // https://drafts.csswg.org/css-position/#abspos-layout 未在此处找到相关解释，但设置为0 使其在可视区域内，可以获取到渲染后正确的宽高
+        setStyle(node, {
+          position: fixed ? 'fixed' : 'absolute',
+          top: 0,
+          left: 0,
+          visibility: 'hidden',
+        });
 
         const waitTime = 100;
-        ro.current = new ResizeObserver(throttle(updatePosition.bind(this), waitTime));
+        ro.current = new ResizeObserver(throttle(updatePosition, waitTime));
         ro.current.observe(containerNode);
         ro.current.observe(node);
 

@@ -151,27 +151,37 @@ export const getOverflowNodes = (targetNode: HTMLElement, container: HTMLElement
  * @returns
  */
 export function getViewPort(container: HTMLElement) {
-  let calcContainer: HTMLElement = container;
+  const isScrollElement = (element: HTMLElement) => {
+    return getStyle(element, 'overflow') !== 'visible';
+  };
 
-  const isPositionContainer = ['fixed', 'absolute'].includes(getStyle(container, 'position'));
-
-  while (calcContainer) {
-    const overflow = getStyle(calcContainer, 'overflow');
-    // 若遇到滚动容器
-    if (overflow?.match(/auto|scroll|hidden/)) {
-      // 若 container 不是绝对定位，或者滚动容器也是也对定位，没有跳出滚动容器，使用滚动容器作为可视区域
-      if (
-        !isPositionContainer ||
-        ['fixed', 'absolute'].includes(getStyle(calcContainer, 'position'))
-      ) {
-        return calcContainer;
-      }
-    }
-
-    calcContainer = calcContainer.parentNode as HTMLElement;
+  // 若 container 本身就是滚动容器，则直接返回
+  if (isScrollElement(container)) {
+    return container;
   }
 
-  // 其他情况均使用浏览器的可视区域
+  // https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/offsetParent
+  // 若container为 fixed 或者相对于body定位，则代表其跳出父级滚动容器(若有)，此时使用浏览器视口作为可视区域调整位置
+  if (!container.offsetParent) {
+    // 若container定位节点为body，且body有滚动，则使用body作为可视区域
+    if (container.offsetParent === document.body && isScrollElement(document.body)) {
+      return document.body;
+    }
+    return document.documentElement;
+  }
+
+  // 循环寻找父级滚动容器
+  let scroller: HTMLElement = container.parentElement;
+  while (scroller) {
+    // 若遇到滚动容器则返回
+    if (isScrollElement(scroller)) {
+      return scroller;
+    }
+    // 继续向上寻找
+    scroller = scroller.parentElement;
+  }
+
+  // 未找到则使用根节点
   return document.documentElement;
 }
 

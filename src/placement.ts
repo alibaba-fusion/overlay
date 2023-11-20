@@ -239,105 +239,132 @@ function getNewPlacements(
   staticInfo: any
 ): placementType[] {
   const { overlayInfo, containerInfo } = staticInfo;
-  const npArr: string[] = [];
   const [direction, align = ''] = p.split('');
 
   const topOut = t < 0;
   const leftOut = l < 0;
   const rightOut = l + overlayInfo.width > containerInfo.width;
   const bottomOut = t + overlayInfo.height > containerInfo.height;
-  const outNumber = [topOut, leftOut, rightOut, bottomOut].filter(Boolean).length;
-  const preferHoz = ['l', 'r'].includes(direction);
-
-  const push = (...ps: string[]) => npArr.push(...ps);
-  switch (outNumber) {
-    case 0:
-    case 4: {
-      // 任意placement都不可能四面超出
-      // 四侧超出或未超出，不处理
-      return null;
-    }
-    case 3: {
-      if (topOut && leftOut && rightOut) {
-        // 左上右超出, try b
-        push('b', 'bl', 'br');
-      }
-      if (topOut && leftOut && bottomOut) {
-        // 左上下超出, try r
-        push('r', 'rt', 'rb');
-      }
-      if (topOut && rightOut && bottomOut) {
-        // 上右下超出, try l
-        push('l', 'lt', 'lb');
-      }
-
-      if (bottomOut && leftOut && rightOut) {
-        // 左下右超出, try t
-        push('t', 'tl', 'tr');
-      }
-      break;
-    }
-    case 2: {
-      if (topOut && leftOut) {
-        // 左上超出, try bl rt
-        push('bl', 'rt');
-      }
-      if (topOut && rightOut) {
-        // 右上超出, try br lt
-        push('br', 'lt');
-      }
-      if (rightOut && bottomOut) {
-        // 右下超出, try tr lb
-        push('tr', 'lb');
-      }
-      if (leftOut && bottomOut) {
-        // 左下超出, try tl rb
-        push('tl', 'rb');
-      }
-      break;
-    }
-    case 1: {
-      if (topOut) {
-        if (align) {
-          push(direction.replace('t', 'b') + align.replace('b', 't'));
-        } else {
-          push('lt', 'rt', 'b');
-        }
-      }
-      if (leftOut) {
-        if (align) {
-          push(direction.replace('l', 'r') + align.replace('r', 'l'));
-        } else {
-          push('tl', 'bl', 'r');
-        }
-      }
-      if (bottomOut) {
-        if (align) {
-          push(direction.replace('b', 't') + align.replace('t', 'b'));
-        } else {
-          push('lb', 'rb', 't');
-        }
-      }
-      if (rightOut) {
-        if (align) {
-          push(direction.replace('r', 'l') + align.replace('l', 'r'));
-        } else {
-          push('tr', 'br', 'l');
-        }
-      }
-      break;
-    }
-    // no default
+  const forbiddenSet = new Set<placementType>();
+  const forbid = (...ps: placementType[]) => ps.forEach((t) => forbiddenSet.add(t));
+  // 上方超出
+  if (topOut) {
+    forbid('t', 'tl', 'tr');
   }
-  const hozGroup = direction === 'l' ? ['l', 'r'] : ['r', 'l'];
-  const verGroup = direction === 't' ? ['t', 'b'] : ['b', 't'];
-  const hozOrders = hozGroup.concat(verGroup);
-  const verOrders = verGroup.concat(hozGroup);
-  const orders = preferHoz ? hozOrders : verOrders;
-  npArr.sort((a, b) => {
-    return orders.indexOf(a[0]) - orders.indexOf(b[0]);
+
+  // 右侧超出
+  if (rightOut) {
+    forbid('r', 'rt', 'rb');
+  }
+
+  // 下方超出
+  if (bottomOut) {
+    forbid('b', 'bl', 'br');
+  }
+
+  // 左侧超出
+  if (leftOut) {
+    forbid('l', 'lt', 'lb');
+  }
+
+  const allPlacements: placementType[] = [
+    't',
+    'tl',
+    'tr',
+    'r',
+    'rt',
+    'rb',
+    'b',
+    'bl',
+    'br',
+    'l',
+    'lt',
+    'lb',
+  ];
+  // 过滤出所有可用的
+  const canTryPlacements = allPlacements.filter((t) => !forbiddenSet.has(t));
+
+  // 无可用
+  if (!canTryPlacements.length) {
+    return null;
+  }
+
+  // 排序规则: 同向 > 对向 > 其他方向; 同align > 其他align; 中间 > l = t > r = b; align规则仅在同侧比较时生效
+  // 参考： https://github.com/alibaba-fusion/overlay/issues/23
+
+  const reverseMap: Record<string, string> = {
+    l: 'r',
+    r: 'l',
+    t: 'b',
+    b: 't',
+    '': '',
+  };
+  // direction权重, l=t > r=b
+  // 权重差值 4
+  const directionOrderWeights: Record<string, number> = {
+    t: 10,
+    b: 6,
+    l: 10,
+    r: 6,
+  };
+  // 用户的 direction 最高
+  directionOrderWeights[direction] = 12;
+  // 用户 direction 的反转方向其次
+  directionOrderWeights[reverseMap[direction]] = 11;
+
+  // align排序权重: '' > l=t > r=b
+  // 此处取值 2, 1, 0 意为远小于 direction 权重值和其差值，使得在加权和比较时不影响 direction，达到"仅同向比较align的目的"
+  const alignOrderWeights: Record<string, number> = {
+    '': 2,
+    l: 1,
+    r: 0,
+    t: 1,
+    b: 0,
+  };
+  // 用户的 align 权重最高
+  alignOrderWeights[align] = 3;
+
+  canTryPlacements.sort((after, before) => {
+    const [afterDirection, afterAlign = ''] = after.split('');
+    const [beforeDirection, beforeAlign = ''] = before.split('');
+    const afterDirectionWeight = directionOrderWeights[afterDirection];
+    const afterAlignWeight = alignOrderWeights[afterAlign];
+    const beforeDirectionWeight = directionOrderWeights[beforeDirection];
+    const beforeAlighWeight = alignOrderWeights[beforeAlign];
+    // direction都相同，比较align weight
+    if (afterDirection === beforeDirection) {
+      return afterAlignWeight > beforeAlighWeight ? -1 : 1;
+    }
+
+    // align 相同，比较 direction weight
+    if (afterAlign === beforeAlign) {
+      return afterDirectionWeight > beforeDirectionWeight ? -1 : 1;
+    }
+
+    // 都不同
+    // 与用户 direction相同情况优先最高
+    if ([afterDirection, beforeDirection].includes(direction)) {
+      return afterDirection === direction ? -1 : 1;
+    }
+
+    const reverseDirection = reverseMap[direction];
+    // 与用户 reverse direction 相同则优先级其次
+    if ([afterDirection, beforeDirection].includes(reverseDirection)) {
+      return afterDirection === reverseDirection ? -1 : 1;
+    }
+
+    // 与用户align相同,则优先级更高
+    if ([afterAlign, beforeAlign].includes(align)) {
+      return afterAlign === align ? -1 : 1;
+    }
+
+    // 没有特殊情况，进行加权和比较
+    return afterDirectionWeight + afterAlignWeight > beforeDirectionWeight + beforeAlighWeight
+      ? -1
+      : 1;
   });
-  return npArr as placementType[];
+
+  return canTryPlacements;
 }
 
 function getBackupPlacement(
@@ -380,28 +407,13 @@ function autoAdjustPosition(
 ): { left: number; top: number; placement: placementType } | null {
   let left = l;
   let top = t;
-  const { overlayInfo, targetInfo, viewport } = staticInfo;
-  let { container, containerInfo } = staticInfo;
-  const { width: oWidth, height: oHeight } = overlayInfo;
-  const { width: tWidth, height: tHeight } = targetInfo;
-  const { width: cWidth, height: cHeight, left: cLeft, top: cTop } = containerInfo;
+  const { viewport, container, containerInfo } = staticInfo;
+  const { left: cLeft, top: cTop } = containerInfo;
 
-  // 若容器空间不足以支撑overlay + target，则使用viewport作为参考调整内容
-  if (viewport !== container && oWidth + tWidth > cWidth && oHeight + tHeight > cHeight) {
+  // 此时left&top是相对于container的，若container不是 viewport，则需要调整为相对 viewport 的 left & top 再计算
+  if (viewport !== container) {
     left += cLeft;
     top += cTop;
-    container = viewport;
-    const { left: vLeft, top: vTop } = getViewTopLeft(viewport);
-    containerInfo = {
-      width: viewport.clientWidth || viewport.offsetWidth,
-      height: viewport.clientHeight || viewport.offsetHeight,
-      left: vLeft,
-      top: vTop,
-    };
-  }
-
-  if (!shouldResizePlacement(left, top, viewport, staticInfo)) {
-    return null;
   }
 
   // 根据位置超出情况，获取所有可以尝试的位置列表
@@ -516,6 +528,7 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
       scrollTop: cscrollTop,
       scrollLeft: cscrollLeft,
     },
+    overlay,
     overlayInfo: { width: owidth, height: oheight },
     points: opoints,
     placementOffset,
@@ -532,7 +545,6 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
   // 位置动态优化思路见 https://github.com/alibaba-fusion/overlay/issues/23
   if (autoAdjust && placement && shouldResizePlacement(left, top, viewport, staticInfo)) {
     const adjustResult = autoAdjustPosition(left, top, placement, staticInfo);
-
     if (adjustResult) {
       left = adjustResult.left;
       top = adjustResult.top;
