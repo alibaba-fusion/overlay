@@ -151,20 +151,21 @@ export const getOverflowNodes = (targetNode: HTMLElement, container: HTMLElement
  * @returns
  */
 export function getViewPort(container: HTMLElement) {
-  const isScrollElement = (element: HTMLElement) => {
+  const isContentClippedElement = (element: HTMLElement) => {
     return getStyle(element, 'overflow') !== 'visible';
   };
 
   // 若 container 本身就是滚动容器，则直接返回
-  if (isScrollElement(container)) {
+  if (isContentClippedElement(container)) {
     return container;
   }
 
   // https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/offsetParent
   // 若container为 fixed 或者相对于body定位，则代表其跳出父级滚动容器(若有)，此时使用浏览器视口作为可视区域调整位置
-  if (!container.offsetParent) {
+  const { offsetParent } = container;
+  if (!offsetParent || offsetParent === document.body) {
     // 若container定位节点为body，且body有滚动，则使用body作为可视区域
-    if (container.offsetParent === document.body && isScrollElement(document.body)) {
+    if (offsetParent === document.body && isContentClippedElement(document.body)) {
       return document.body;
     }
     return document.documentElement;
@@ -174,7 +175,7 @@ export function getViewPort(container: HTMLElement) {
   let scroller: HTMLElement = container.parentElement;
   while (scroller) {
     // 若遇到滚动容器则返回
-    if (isScrollElement(scroller)) {
+    if (isContentClippedElement(scroller)) {
       return scroller;
     }
     // 继续向上寻找
