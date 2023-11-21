@@ -146,6 +146,52 @@ export const getOverflowNodes = (targetNode: HTMLElement, container: HTMLElement
 };
 
 /**
+ * 获取 containing block
+ * https://developer.mozilla.org/en-US/docs/Web/CSS/Containing_block#identifying_the_containing_block
+ */
+function getContainingBlock(element: HTMLElement): HTMLElement | null {
+  function isWebKit(): boolean {
+    if (typeof CSS === 'undefined' || !CSS.supports) {
+      return false;
+    }
+    return CSS.supports('-webkit-backdrop-filter', 'none');
+  }
+
+  function isContainingBlock(ele: Element) {
+    const webkit = isWebKit();
+    const css = getComputedStyle(ele);
+
+    return (
+      css.transform !== 'none' ||
+      css.perspective !== 'none' ||
+      (css.containerType ? css.containerType !== 'normal' : false) ||
+      (!webkit && (css.backdropFilter ? css.backdropFilter !== 'none' : false)) ||
+      (!webkit && (css.filter ? css.filter !== 'none' : false)) ||
+      ['transform', 'perspective', 'filter'].some((value) =>
+        (css.willChange || '').includes(value)
+      ) ||
+      ['paint', 'layout', 'strict', 'content'].some((value) => (css.contain || '').includes(value))
+    );
+  }
+
+  function isLastTraversableElement(ele: Element): boolean {
+    return ['html', 'body'].includes(ele.tagName.toLowerCase());
+  }
+
+  let currentElement: HTMLElement | null = element.parentElement;
+
+  while (currentElement && !isLastTraversableElement(currentElement)) {
+    if (isContainingBlock(currentElement)) {
+      return currentElement;
+    } else {
+      currentElement = currentElement.parentElement;
+    }
+  }
+
+  return null;
+}
+
+/**
  * 获取可视区域，用来计算弹窗应该相对哪个节点做上下左右的位置变化。
  * @param container
  * @returns
@@ -160,15 +206,9 @@ export function getViewPort(container: HTMLElement) {
     return container;
   }
 
-  // https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/offsetParent
-  // 若container为 fixed 或者相对于body定位，则代表其跳出父级滚动容器(若有)，此时使用浏览器视口作为可视区域调整位置
-  const { offsetParent } = container;
-  if (!offsetParent || offsetParent === document.body) {
-    // 若container定位节点为body，且body有滚动，则使用body作为可视区域
-    if (offsetParent === document.body && isContentClippedElement(document.body)) {
-      return document.body;
-    }
-    return document.documentElement;
+  // 若container为 fixed 则代表其跳出父级滚动容器(若有)，使用 containing block 或 浏览器根节点 作为可视区域
+  if (getStyle(container, 'position') === 'fixed') {
+    return getContainingBlock(container) || document.documentElement;
   }
 
   // 循环寻找父级滚动容器
