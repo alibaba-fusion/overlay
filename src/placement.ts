@@ -408,12 +408,12 @@ function autoAdjustPosition(
   let left = l;
   let top = t;
   const { viewport, container, containerInfo } = staticInfo;
-  const { left: cLeft, top: cTop } = containerInfo;
+  const { left: cLeft, top: cTop, scrollLeft, scrollTop } = containerInfo;
 
   // 此时left&top是相对于container的，若container不是 viewport，则需要调整为相对 viewport 的 left & top 再计算
   if (viewport !== container) {
-    left += cLeft;
-    top += cTop;
+    left += cLeft - scrollLeft;
+    top += cTop - scrollTop;
   }
 
   // 根据位置超出情况，获取所有可以尝试的位置列表
