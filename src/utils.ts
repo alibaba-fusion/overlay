@@ -270,7 +270,10 @@ export function getViewPort(container: HTMLElement) {
     }
   }
 
-  return getContentClippedElement(container.parentElement) || fallbackViewportElement;
+  if (container.parentElement) {
+    return getContentClippedElement(container.parentElement) || fallbackViewportElement;
+  }
+  return fallbackViewportElement;
 }
 
 export function getStyle(elt: Element, name: string) {
