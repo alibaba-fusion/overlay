@@ -146,38 +146,48 @@ export const getOverflowNodes = (targetNode: HTMLElement, container: HTMLElement
 };
 
 /**
- * 获取 containing block
+ * 是否是webkit内核
+ */
+function isWebKit(): boolean {
+  if (typeof CSS === 'undefined' || !CSS.supports) {
+    return false;
+  }
+  return CSS.supports('-webkit-backdrop-filter', 'none');
+}
+
+/**
+ * 判断元素是否是会影响后代节点定位的 containing block
  * https://developer.mozilla.org/en-US/docs/Web/CSS/Containing_block#identifying_the_containing_block
  */
-function getContainingBlock(element: HTMLElement): HTMLElement | null {
-  function isWebKit(): boolean {
-    if (typeof CSS === 'undefined' || !CSS.supports) {
-      return false;
-    }
-    return CSS.supports('-webkit-backdrop-filter', 'none');
-  }
+function isContainingBlock(ele: Element) {
+  const webkit = isWebKit();
+  const css = getComputedStyle(ele);
 
-  function isContainingBlock(ele: Element) {
-    const webkit = isWebKit();
-    const css = getComputedStyle(ele);
-
-    return (
-      css.transform !== 'none' ||
-      css.perspective !== 'none' ||
-      (css.containerType ? css.containerType !== 'normal' : false) ||
-      (!webkit && (css.backdropFilter ? css.backdropFilter !== 'none' : false)) ||
-      (!webkit && (css.filter ? css.filter !== 'none' : false)) ||
+  return Boolean(
+    (css.transform && css.transform !== 'none') ||
+      (css.perspective && css.perspective !== 'none') ||
+      (css.containerType && css.containerType !== 'normal') ||
+      (!webkit && css.backdropFilter && css.backdropFilter !== 'none') ||
+      (!webkit && css.filter && css.filter !== 'none') ||
       ['transform', 'perspective', 'filter'].some((value) =>
         (css.willChange || '').includes(value)
       ) ||
       ['paint', 'layout', 'strict', 'content'].some((value) => (css.contain || '').includes(value))
-    );
-  }
+  );
+}
 
-  function isLastTraversableElement(ele: Element): boolean {
-    return ['html', 'body'].includes(ele.tagName.toLowerCase());
-  }
+/**
+ * 判断元素是否是 html 或 body 元素
+ */
+function isLastTraversableElement(ele: Element): boolean {
+  return ['html', 'body'].includes(ele.tagName.toLowerCase());
+}
 
+/**
+ * 获取 containing block
+ * https://developer.mozilla.org/en-US/docs/Web/CSS/Containing_block#identifying_the_containing_block
+ */
+function getContainingBlock(element: HTMLElement): HTMLElement | null {
   let currentElement: HTMLElement | null = element.parentElement;
 
   while (currentElement && !isLastTraversableElement(currentElement)) {
@@ -192,38 +202,75 @@ function getContainingBlock(element: HTMLElement): HTMLElement | null {
 }
 
 /**
+ * 判断元素是否会裁剪内容区域
+ * https://developer.mozilla.org/en-US/docs/Web/CSS/overflow
+ */
+const isContentClippedElement = (element: Element) => {
+  const overflow = getStyle(element, 'overflow');
+  // 测试环境overflow默认为 ''
+  return overflow && overflow !== 'visible';
+};
+
+/**
+ * 获取最近的裁剪内容区域的祖先节点
+ */
+function getContentClippedElement(element: HTMLElement) {
+  if (isContentClippedElement(element)) {
+    return element;
+  }
+  let parent = element.parentElement;
+  while (parent) {
+    if (isContentClippedElement(parent)) {
+      return parent;
+    }
+    parent = parent.parentElement;
+  }
+  return null;
+}
+
+/**
+ * 获取定位节点，忽略表格元素影响
+ * https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/offsetParent
+ * @param element
+ * @returns closest positioned ancestor element
+ */
+function getOffsetParent(element: HTMLElement): HTMLElement | null {
+  let { offsetParent } = element;
+  while (offsetParent && ['table', 'th', 'td'].includes(offsetParent.tagName.toLowerCase())) {
+    // @ts-ignore
+    offsetParent = offsetParent.offsetParent;
+  }
+  return offsetParent as HTMLElement;
+}
+
+/**
  * 获取可视区域，用来计算弹窗应该相对哪个节点做上下左右的位置变化。
  * @param container
  * @returns
  */
 export function getViewPort(container: HTMLElement) {
-  const isContentClippedElement = (element: HTMLElement) => {
-    return getStyle(element, 'overflow') !== 'visible';
-  };
-
   // 若 container 本身就是滚动容器，则直接返回
   if (isContentClippedElement(container)) {
     return container;
   }
 
-  // 若container为 fixed 则代表其跳出父级滚动容器(若有)，使用 containing block 或 浏览器根节点 作为可视区域
-  if (getStyle(container, 'position') === 'fixed') {
-    return getContainingBlock(container) || document.documentElement;
-  }
+  const fallbackViewportElement = document.documentElement;
 
-  // 循环寻找父级滚动容器
-  let scroller: HTMLElement = container.parentElement;
-  while (scroller) {
-    // 若遇到滚动容器则返回
-    if (isContentClippedElement(scroller)) {
-      return scroller;
+  // 若 container 的 position 是 absolute 或 fixed，则有可能会脱离其最近的滚动容器，需要根据 offsetParent 和 containing block来综合判断
+  if (['fixed', 'absolute'].includes(getStyle(container, 'position'))) {
+    // 先获取定位节点（若无则使用 containerBlock）
+    const offsetParent = getOffsetParent(container) || getContainingBlock(container);
+    // 拥有定位节点
+    if (offsetParent) {
+      // 从定位节点开始寻找父级滚动容器
+      return getViewPort(offsetParent);
+    } else {
+      // 无定位节点，也无containingBlock影响，则用 fallback元素
+      return fallbackViewportElement;
     }
-    // 继续向上寻找
-    scroller = scroller.parentElement;
   }
 
-  // 未找到则使用根节点
-  return document.documentElement;
+  return getContentClippedElement(container.parentElement) || fallbackViewportElement;
 }
 
 export function getStyle(elt: Element, name: string) {
