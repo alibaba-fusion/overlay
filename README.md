@@ -39,6 +39,7 @@ Popup 是对 Overlay 的封装，children作为触发节点，弹出一个浮层
 | onRequestClose         | 弹层请求关闭时触发事件的回调函数                       | Function       | () => {} |
 | target                 | 弹层定位的参照元素                                  | Function            | （）=> document.body |
 | points                 | 弹层相对于参照元素的定位                             | [point, point] | ['tl', 'bl'] |
+| placement              | 部分points的简写模式<br/><br/>**可选值**:<br/>'t'(上，对应 points: ['bc', 'tc'])<br/>'r'(右，对应 points: ['lc', 'rc'])<br/>'b'(下，对应 points: ['tc', 'bc'])<br/>'l'(左，对应 points: ['rc', 'lc'])<br/>'tl'(上左，对应 points: ['bl', 'tl'])<br/>'tr'(上右，对应 points: ['br', 'tr'])<br/>'bl'(下左，对应 points: ['tl', 'bl'])<br/>'br'(下右，对应 points: ['tr', 'br'])<br/>'lt'(左上，对应 points: ['rt', 'lt'])<br/>'lb'(左下，对应 points: ['rb', 'lb'])<br/>'rt'(右上，对应 points: ['lt', 'rt'])<br/>'rb'(右下，对应 points: ['lb', 'rb'])                                                                           | Enum           | 'bl'                                                            |      |
 | offset                 | 弹层相对于trigger的定位的微调, 接收数组[hoz, ver], 表示弹层在 left / top 上的增量<br/>e.g. [100, 100] 表示往右、下分布偏移100px | Array          | [0, 0]|
 | container              | 渲染组件的容器，如果是函数需要返回 ref，如果是字符串则是该 DOM 的 id，也可以直接传入 DOM 节点 | any            | - |
 | hasMask                | 是否显示遮罩 | Boolean        | false |
