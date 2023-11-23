@@ -267,20 +267,7 @@ function getNewPlacements(
     forbid('l', 'lt', 'lb');
   }
 
-  const allPlacements: placementType[] = [
-    't',
-    'tl',
-    'tr',
-    'r',
-    'rt',
-    'rb',
-    'b',
-    'bl',
-    'br',
-    'l',
-    'lt',
-    'lb',
-  ];
+  const allPlacements = Object.keys(placementMap) as placementType[];
   // 过滤出所有可用的
   const canTryPlacements = allPlacements.filter((t) => !forbiddenSet.has(t));
 

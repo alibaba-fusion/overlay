@@ -237,8 +237,7 @@ function getContentClippedElement(element: HTMLElement) {
 function getOffsetParent(element: HTMLElement): HTMLElement | null {
   let { offsetParent } = element;
   while (offsetParent && ['table', 'th', 'td'].includes(offsetParent.tagName.toLowerCase())) {
-    // @ts-ignore
-    offsetParent = offsetParent.offsetParent;
+    offsetParent = (offsetParent as HTMLElement).offsetParent;
   }
   return offsetParent as HTMLElement;
 }

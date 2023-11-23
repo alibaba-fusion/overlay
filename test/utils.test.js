@@ -202,5 +202,45 @@ describe('utils', () => {
       document.body.appendChild(app);
       expect(getViewPort(box)).toBe(app);
     });
+    it('when box is sticky', () => {
+      const box = createElement('box');
+      box.style.position = 'sticky';
+      const app = createElement('app');
+      app.appendChild(box);
+      document.body.appendChild(app);
+      expect(getViewPort(box)).toBe(document.documentElement);
+    });
+    it('when box is sticky and parent is clipped', () => {
+      const box = createElement('box');
+      box.style.position = 'sticky';
+      const app = createElement('app');
+      app.style.overflow = 'auto';
+      app.appendChild(box);
+      document.body.appendChild(app);
+      expect(getViewPort(box)).toBe(app);
+    });
+    it('when box is sticky and ancestor is clipped', () => {
+      const box = createElement('box');
+      box.style.position = 'sticky';
+      const parent = createElement('parent');
+      parent.appendChild(box);
+      const app = createElement('app');
+      app.style.overflow = 'auto';
+      app.appendChild(parent);
+      document.body.appendChild(app);
+      expect(getViewPort(box)).toBe(app);
+    });
+    it('when box is sticky and parent is containingBlock and ancestor is clipped', () => {
+      const box = createElement('box');
+      box.style.position = 'sticky';
+      const parent = createElement('parent');
+      parent.style.transform = 'translate(1px)';
+      parent.appendChild(box);
+      const app = createElement('app');
+      app.style.overflow = 'auto';
+      app.appendChild(parent);
+      document.body.appendChild(app);
+      expect(getViewPort(box)).toBe(app);
+    });
   });
 });
