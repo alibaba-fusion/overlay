@@ -619,13 +619,13 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
       top = adjustResult.top;
       placement = adjustResult.placement;
     }
-  }
 
-  const adjustXYResult = adjustXY(left, top, placement, staticInfo);
-  if (adjustXYResult) {
-    left = adjustXYResult.left;
-    top = adjustXYResult.top;
-    placement = adjustXYResult.placement;
+    const adjustXYResult = adjustXY(left, top, placement, staticInfo);
+    if (adjustXYResult) {
+      left = adjustXYResult.left;
+      top = adjustXYResult.top;
+      placement = adjustXYResult.placement;
+    }
   }
 
   const result: PositionResult = {
