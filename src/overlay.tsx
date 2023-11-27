@@ -254,11 +254,12 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
       beforePosition,
       autoAdjust,
       rtl,
+      autoHideScrollOverflow: others.autoHideScrollOverflow,
     });
 
     if (!isSameObject(positionStyleRef.current, placements.style)) {
       positionStyleRef.current = placements.style;
-      setStyle(overlayNode, { ...placements.style, visibility: '' });
+      setStyle(overlayNode, placements.style);
       typeof onPosition === 'function' && onPosition(placements);
     }
   });
@@ -284,17 +285,11 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
 
         overflowRef.current = getOverflowNodes(targetNode, containerNode);
 
-        // 1. 这里提前先设置好 position 属性，因为有的节点可能会因为设置了 position 属性导致宽度变小
-        // 2. 设置 visibility 先把弹窗藏起来，避免影响视图
-        // 3. 因为未知原因，原先 left&top 设置为 -1000的方式隐藏会导致获取到的overlay元素宽高不对
-        // https://drafts.csswg.org/css-position/#abspos-layout 未在此处找到相关解释，可能是浏览器优化，但使其有部分在可视区域内，就可以获取到渲染后正确的宽高, 然后使用visibility隐藏
-        const nodeRect = getWidthHeight(node);
+        // fixme: 在followTrigger且空间受限且overlay自动宽度情况下，overlay宽度会跟随left设定自动撑满containing block最右侧，这里建议手动设定overlay宽度或拥有固定内容宽度的overlay来解决，这里暂时使用原来的-1000位置的方案隐藏overlay并不影响容器宽高
         setStyle(node, {
           position: fixed ? 'fixed' : 'absolute',
-          // 这里 -nodeRect.width 是避免添加到容器内导致容器出现宽高变化， +1 是为了能确保有一部分在可视区域内
-          top: -nodeRect.height + 1,
-          left: -nodeRect.width + 1,
-          visibility: 'hidden',
+          top: -1000,
+          left: -1000,
         });
 
         const waitTime = 100;

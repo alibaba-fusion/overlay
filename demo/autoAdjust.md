@@ -5,6 +5,8 @@ order: 7
 
 能够根据空间大小自动更换 placement
 
+> 若调整后位置始终不符合预期，可能是渲染过程中overlay内容宽度发生了变化导致计算错误，可以尝试固定overlay内容宽度来解决
+
 ```jsx
 import { useState } from 'react';
 import Overlay from '@alifd/overlay';

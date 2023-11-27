@@ -354,6 +354,10 @@ function getNewPlacements(
   return canTryPlacements;
 }
 
+/**
+ * 任意预设位置都无法完全容纳overlay，则走兜底逻辑，原则是哪边空间大用哪边
+ * fixme: 在overlay尺寸宽高超过滚动容器宽高情况没有考虑，先走adjustXY逻辑
+ */
 function getBackupPlacement(
   l: number,
   t: number,
@@ -384,6 +388,84 @@ function getBackupPlacement(
     }
   }
   return null;
+}
+
+/**
+ * 基于xy的兜底调整
+ * @param left overlay距离定位节点左侧距离
+ * @param top overlay距离定位节点上方距离
+ * @param placement 位置
+ * @param staticInfo 其它信息
+ */
+function adjustXY(
+  left: number,
+  top: number,
+  placement: placementType,
+  staticInfo: any
+): { left: number; top: number; placement: placementType } | null {
+  const { viewport, container, containerInfo, overlayInfo, rtl } = staticInfo;
+  if (!shouldResizePlacement(left, top, viewport, staticInfo)) {
+    // 无需调整
+    return null;
+  }
+  // 仍然需要调整
+  let x = left;
+  let y = top;
+  let xAdjust = 0;
+  let yAdjust = 0;
+  // 调整为基于 viewport 的xy
+  if (viewport !== container) {
+    const { left: cLeft, top: cTop, scrollLeft, scrollTop } = containerInfo;
+    xAdjust = cLeft - scrollLeft;
+    yAdjust = cTop - scrollTop;
+    x += xAdjust;
+    y += yAdjust;
+  }
+  const { width: oWidth, height: oHeight } = overlayInfo;
+  const { scrollWidth: vWidth, scrollHeight: vHeight } = viewport;
+  const leftOut = x < 0;
+  const topOut = y < 0;
+  const rightOut = x + oWidth > vWidth;
+  const bottomOut = y + oHeight > vHeight;
+
+  if (oWidth > vWidth || oHeight > vHeight) {
+    // overlay 比 可视区域还要大，方案有：
+    // 1. 根据rtl模式，强制对齐习惯侧边缘，忽略另一侧超出
+    // 2. 强制调整overlay宽高，并设置overflow
+    // 第二种会影响用户布局，先采用第一种办法吧
+
+    if (oWidth > vWidth) {
+      if (rtl) {
+        x = vWidth - oWidth;
+      } else {
+        x = 0;
+      }
+    }
+    if (oHeight > vHeight) {
+      y = 0;
+    }
+  } else {
+    // viewport可以容纳 overlay
+    // 则哪边超出，哪边重置为边缘位置
+    if (leftOut) {
+      x = 0;
+    }
+    if (topOut) {
+      y = 0;
+    }
+    if (rightOut) {
+      x = vWidth - oWidth;
+    }
+    if (bottomOut) {
+      y = vHeight - oHeight;
+    }
+  }
+
+  return {
+    left: x - xAdjust,
+    top: y - yAdjust,
+    placement,
+  };
 }
 
 function autoAdjustPosition(
@@ -537,6 +619,13 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
       top = adjustResult.top;
       placement = adjustResult.placement;
     }
+  }
+
+  const adjustXYResult = adjustXY(left, top, placement, staticInfo);
+  if (adjustXYResult) {
+    left = adjustXYResult.left;
+    top = adjustXYResult.top;
+    placement = adjustXYResult.placement;
   }
 
   const result: PositionResult = {

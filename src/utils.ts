@@ -117,31 +117,18 @@ export const getOverflowNodes = (targetNode: HTMLElement, container: HTMLElement
   }
 
   const overflowNodes: HTMLElement[] = [];
+  // 使用getViewPort方式获取滚动节点，考虑元素可能会跳出最近的滚动容器的情况（绝对定位，containingBlock等原因）
+  // 原先的只获取了可滚动的滚动容器（滚动高度超出容器高度），改成只要具有滚动属性即可，因为后面可能会发生内容变化导致其变得可滚动了
+  let overflowNode = getViewPort(targetNode.parentElement);
 
-  let calcContainer: HTMLElement = targetNode;
-
-  while (true) {
-    // 忽略 body/documentElement, 不算额外滚动元素
-    if (
-      !calcContainer ||
-      calcContainer === container ||
-      calcContainer === document.body ||
-      calcContainer === document.documentElement
-    ) {
+  while (overflowNode && container.contains(overflowNode) && container !== overflowNode) {
+    overflowNodes.push(overflowNode);
+    if (overflowNode.parentElement) {
+      overflowNode = getViewPort(overflowNode.parentElement);
+    } else {
       break;
     }
-
-    const overflow = getStyle(calcContainer, 'overflow');
-    if (overflow && overflow.match(/auto|scroll/)) {
-      const { clientWidth, clientHeight, scrollWidth, scrollHeight } = calcContainer;
-      if (clientHeight !== scrollHeight || clientWidth !== scrollWidth) {
-        overflowNodes.push(calcContainer);
-      }
-    }
-
-    calcContainer = calcContainer.parentNode as HTMLElement;
   }
-
   return overflowNodes;
 };
 
@@ -247,7 +234,7 @@ function getOffsetParent(element: HTMLElement): HTMLElement | null {
  * @param container
  * @returns
  */
-export function getViewPort(container: HTMLElement) {
+export function getViewPort(container: HTMLElement): HTMLElement {
   // 若 container 本身就是滚动容器，则直接返回
   if (isContentClippedElement(container)) {
     return container;
@@ -270,7 +257,7 @@ export function getViewPort(container: HTMLElement) {
   }
 
   if (container.parentElement) {
-    return getContentClippedElement(container.parentElement) || fallbackViewportElement;
+    return getViewPort(container.parentElement) || fallbackViewportElement;
   }
   return fallbackViewportElement;
 }
