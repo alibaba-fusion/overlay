@@ -238,13 +238,12 @@ function getNewPlacements(
   p: placementType,
   staticInfo: any
 ): placementType[] {
-  const { overlayInfo, containerInfo } = staticInfo;
+  const { overlayInfo, viewportInfo } = staticInfo;
   const [direction, align = ''] = p.split('');
-
   const topOut = t < 0;
   const leftOut = l < 0;
-  const rightOut = l + overlayInfo.width > containerInfo.width;
-  const bottomOut = t + overlayInfo.height > containerInfo.height;
+  const rightOut = l + overlayInfo.width > viewportInfo.width;
+  const bottomOut = t + overlayInfo.height > viewportInfo.height;
   const forbiddenSet = new Set<placementType>();
   const forbid = (...ps: placementType[]) => ps.forEach((t) => forbiddenSet.add(t));
   // 上方超出
@@ -364,13 +363,13 @@ function getBackupPlacement(
   p: placementType,
   staticInfo: any
 ): placementType | null {
-  const { overlayInfo, containerInfo } = staticInfo;
+  const { overlayInfo, viewportInfo } = staticInfo;
   const [direction, align] = p.split('');
 
   const topOut = t < 0;
   const leftOut = l < 0;
-  const rightOut = l + overlayInfo.width > containerInfo.width;
-  const bottomOut = t + overlayInfo.height > containerInfo.height;
+  const rightOut = l + overlayInfo.width > viewportInfo.width;
+  const bottomOut = t + overlayInfo.height > viewportInfo.height;
   const outNumber = [topOut, leftOut, rightOut, bottomOut].filter(Boolean).length;
 
   if (outNumber === 3) {
@@ -403,7 +402,7 @@ function adjustXY(
   placement: placementType,
   staticInfo: any
 ): { left: number; top: number; placement: placementType } | null {
-  const { viewport, container, containerInfo, overlayInfo, rtl } = staticInfo;
+  const { viewport, viewportInfo, container, containerInfo, overlayInfo, rtl } = staticInfo;
   if (!shouldResizePlacement(left, top, viewport, staticInfo)) {
     // 无需调整
     return null;
@@ -422,7 +421,7 @@ function adjustXY(
     y += yAdjust;
   }
   const { width: oWidth, height: oHeight } = overlayInfo;
-  const { scrollWidth: vWidth, scrollHeight: vHeight } = viewport;
+  const { width: vWidth, height: vHeight } = viewportInfo;
   const leftOut = x < 0;
   const topOut = y < 0;
   const rightOut = x + oWidth > vWidth;
@@ -514,6 +513,23 @@ function autoAdjustPosition(
 }
 
 /**
+ * 获取滚动容器的尺寸位置信息
+ * 滚动宽高代替宽高
+ */
+function getScrollerRect(scroller: HTMLElement) {
+  const { left, top } = getViewTopLeft(scroller);
+  const { scrollWidth: width, scrollHeight: height, scrollTop, scrollLeft } = scroller;
+  return {
+    left,
+    top,
+    width,
+    height,
+    scrollLeft,
+    scrollTop,
+  };
+}
+
+/**
  * 计算相对于 container 的偏移位置
  * @param config
  * @returns
@@ -576,27 +592,17 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
   }
 
   const { width: twidth, height: theight, left: tleft, top: ttop } = target.getBoundingClientRect();
-  const { left: cleft, top: ctop } = getViewTopLeft(container);
-  const {
-    scrollWidth: cwidth,
-    scrollHeight: cheight,
-    scrollTop: cscrollTop,
-    scrollLeft: cscrollLeft,
-  } = container;
+  const containerInfo = getScrollerRect(container);
 
   // 获取可视区域，来计算容器相对位置
   const viewport = getViewPort(container);
-
+  let viewportInfo = containerInfo;
+  if (viewport !== container) {
+    viewportInfo = getScrollerRect(viewport);
+  }
   const staticInfo = {
     targetInfo: { width: twidth, height: theight, left: tleft, top: ttop },
-    containerInfo: {
-      left: cleft,
-      top: ctop,
-      width: cwidth,
-      height: cheight,
-      scrollTop: cscrollTop,
-      scrollLeft: cscrollLeft,
-    },
+    containerInfo,
     overlay,
     overlayInfo: { width: owidth, height: oheight },
     points: opoints,
@@ -605,6 +611,7 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
     container,
     rtl,
     viewport,
+    viewportInfo,
   };
 
   // step1: 根据 placement 计算位置
