@@ -842,7 +842,7 @@ describe('placement', () => {
         },
         adjustExpect: {
           placement: 'b',
-          left: tLeft + target.width / 2 - overlay.width / 2,
+          left: Math.max(0, tLeft + target.width / 2 - overlay.width / 2),
           top: tTop + target.height,
         },
       });
@@ -865,7 +865,7 @@ describe('placement', () => {
         adjustExpect: {
           placement: 'l',
           left: tLeft - overlay.width,
-          top: tTop + target.height / 2 - overlay.height / 2,
+          top: Math.max(0, tTop + target.height / 2 - overlay.height / 2),
         },
       });
     });
@@ -886,7 +886,7 @@ describe('placement', () => {
         },
         adjustExpect: {
           placement: 't',
-          left: tLeft + target.width / 2 - overlay.width / 2,
+          left: Math.max(0, tLeft + target.width / 2 - overlay.width / 2),
           top: tTop - overlay.height,
         },
       });
@@ -909,7 +909,7 @@ describe('placement', () => {
         adjustExpect: {
           placement: 'r',
           left: tLeft + target.width,
-          top: tTop + target.height / 2 - overlay.height / 2,
+          top: Math.max(0, tTop + target.height / 2 - overlay.height / 2),
         },
       });
     });
