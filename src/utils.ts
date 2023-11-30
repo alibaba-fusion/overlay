@@ -235,12 +235,16 @@ function getOffsetParent(element: HTMLElement): HTMLElement | null {
  * @returns
  */
 export function getViewPort(container: HTMLElement): HTMLElement {
+  const fallbackViewportElement = document.documentElement;
+
+  if (!container) {
+    return fallbackViewportElement;
+  }
+
   // 若 container 本身就是滚动容器，则直接返回
   if (isContentClippedElement(container)) {
     return container;
   }
-
-  const fallbackViewportElement = document.documentElement;
 
   // 若 container 的 position 是 absolute 或 fixed，则有可能会脱离其最近的滚动容器，需要根据 offsetParent 和 containing block来综合判断
   if (['fixed', 'absolute'].includes(getStyle(container, 'position'))) {
