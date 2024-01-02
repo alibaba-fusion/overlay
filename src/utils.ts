@@ -307,7 +307,10 @@ export function throttle(func: Function, wait: number) {
     const args = arguments;
     if (now - previous > wait) {
       // @ts-ignore
-      func.apply(this, args);
+      const _this = this;
+      window.requestAnimationFrame(() => {
+        func.apply(_this, args);
+      });
       previous = now;
     }
   };
