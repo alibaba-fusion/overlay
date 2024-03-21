@@ -67,7 +67,7 @@
     "url": "https://github.com/alibaba-fusion/overlay.git"
   },
   "license": "MIT",
-  "homepage": "https://unpkg.com/@alifd/overlay@0.3.3/build/index.html",
+  "homepage": "https://unpkg.com/@alifd/overlay@0.3.4/build/index.html",
   "lint-staged": {
     "@(src|scripts|docs/*/demo)/**/*.@(js|jsx|ts|tsx|md)": [
       "prettier --write"
