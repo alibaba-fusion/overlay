@@ -1,8 +1,10 @@
 import { useEffect, useRef, useLayoutEffect, useCallback } from 'react';
 import { findDOMNode } from 'react-dom';
 
+type CanListenNode = Document | HTMLElement;
+
 export function useListener(
-  nodeList: HTMLElement | HTMLElement[],
+  nodeList: CanListenNode | CanListenNode[],
   eventName: string,
   callback: EventListenerOrEventListenerObject,
   useCapture: boolean,
@@ -32,7 +34,7 @@ export function useListener(
 }
 
 /**
- * 将N个方法合并为一个链式调用的方法
+ * 将 N 个方法合并为一个链式调用的方法
  * @return {Function}     合并后的方法
  *
  * @example
@@ -83,7 +85,7 @@ export function saveRef(ref: any) {
 }
 
 /**
- * 获取 position != static ，用来计算相对位置的容器
+ * 获取 position != static，用来计算相对位置的容器
  * @param container
  * @returns
  */
@@ -117,23 +119,22 @@ export const getOverflowNodes = (targetNode: HTMLElement, container: HTMLElement
   }
 
   const overflowNodes: HTMLElement[] = [];
-  // 使用getViewPort方式获取滚动节点，考虑元素可能会跳出最近的滚动容器的情况（绝对定位，containingBlock等原因）
+  // 使用 getViewPort 方式获取滚动节点，考虑元素可能会跳出最近的滚动容器的情况（绝对定位，containingBlock 等原因）
   // 原先的只获取了可滚动的滚动容器（滚动高度超出容器高度），改成只要具有滚动属性即可，因为后面可能会发生内容变化导致其变得可滚动了
-  let overflowNode = getViewPort(targetNode.parentElement);
+  let overflowNode = getViewPortExcludeSelf(targetNode);
 
   while (overflowNode && container.contains(overflowNode) && container !== overflowNode) {
     overflowNodes.push(overflowNode);
-    if (overflowNode.parentElement) {
-      overflowNode = getViewPort(overflowNode.parentElement);
-    } else {
-      break;
-    }
+    overflowNode = getViewPortExcludeSelf(overflowNode);
+  }
+  if (isScrollableElement(container)) {
+    overflowNodes.push(container);
   }
   return overflowNodes;
 };
 
 /**
- * 是否是webkit内核
+ * 是否是 webkit 内核
  */
 function isWebKit(): boolean {
   if (typeof CSS === 'undefined' || !CSS.supports) {
@@ -194,9 +195,37 @@ function getContainingBlock(element: HTMLElement): HTMLElement | null {
  */
 const isContentClippedElement = (element: Element) => {
   const overflow = getStyle(element, 'overflow');
-  // 测试环境overflow默认为 ''
-  return overflow && overflow !== 'visible';
+  // 测试环境 overflow 默认为 ''
+  return (overflow && overflow !== 'visible') || element === document.documentElement;
 };
+
+/**
+ * 判断元素是否是可滚动的元素，且滚动内容尺寸大于元素尺寸
+ */
+function isScrollableElement(element: Element) {
+  const overflow = getStyle(element, 'overflow');
+  // 这里兼容老的逻辑判断，忽略 hidden
+  if (element === document.documentElement || (overflow && overflow.match(/auto|scroll/))) {
+    const { clientWidth, clientHeight, scrollWidth, scrollHeight } = element;
+    // 仅当实际滚动高度大于元素尺寸时，才被视作是可滚动元素
+    return clientHeight !== scrollHeight || clientWidth !== scrollWidth;
+  }
+  return false;
+}
+
+export function getRect(target: HTMLElement) {
+  if (target === document.documentElement) {
+    const { clientWidth: width, clientHeight: height } = target;
+    return {
+      left: 0,
+      top: 0,
+      width,
+      height,
+    };
+  }
+  const { left, top, width, height } = target.getBoundingClientRect();
+  return { left, top, width, height };
+}
 
 /**
  * 获取最近的裁剪内容区域的祖先节点
@@ -229,6 +258,24 @@ function getOffsetParent(element: HTMLElement): HTMLElement | null {
   return offsetParent as HTMLElement;
 }
 
+export function getViewPortExcludeSelf(target: HTMLElement) {
+  const fallbackViewportElement = document.documentElement;
+  if (!target) {
+    return fallbackViewportElement;
+  }
+  const parent = ['fixed', 'absolute'].includes(getStyle(target, 'position'))
+    ? getOffsetParent(target) || getContainingBlock(target)
+    : target.parentElement;
+
+  if (!parent) {
+    return fallbackViewportElement;
+  }
+  if (isContentClippedElement(parent)) {
+    return parent;
+  }
+  return getViewPortExcludeSelf(parent);
+}
+
 /**
  * 获取可视区域，用来计算弹窗应该相对哪个节点做上下左右的位置变化。
  * @param container
@@ -241,13 +288,12 @@ export function getViewPort(container: HTMLElement): HTMLElement {
     return fallbackViewportElement;
   }
 
-  // 若 container 本身就是滚动容器，则直接返回
-  if (isContentClippedElement(container)) {
-    return container;
-  }
-
-  // 若 container 的 position 是 absolute 或 fixed，则有可能会脱离其最近的滚动容器，需要根据 offsetParent 和 containing block来综合判断
+  // 若 container 的 position 是 absolute 或 fixed，则有可能会脱离其最近的滚动容器，需要根据 offsetParent 和 containing block 来综合判断
   if (['fixed', 'absolute'].includes(getStyle(container, 'position'))) {
+    if (isContentClippedElement(container)) {
+      return container;
+    }
+
     // 先获取定位节点（若无则使用 containerBlock）
     const offsetParent = getOffsetParent(container) || getContainingBlock(container);
     // 拥有定位节点
@@ -255,9 +301,13 @@ export function getViewPort(container: HTMLElement): HTMLElement {
       // 从定位节点开始寻找父级滚动容器
       return getViewPort(offsetParent);
     } else {
-      // 无定位节点，也无containingBlock影响，则用 fallback元素
+      // 无定位节点，也无 containingBlock 影响，则用 fallback 元素
       return fallbackViewportElement;
     }
+  }
+
+  if (isContentClippedElement(container)) {
+    return container;
   }
 
   if (container.parentElement) {
@@ -335,7 +385,7 @@ export function debounce(func: Function, wait: number) {
  */
 export function getViewTopLeft(node: HTMLElement) {
   /**
-   * document.body 向下滚动后 scrollTop 一直为0，同时 top=-xx 为负数，相当于本身是没有滚动条的，这个逻辑是正确的。
+   * document.body 向下滚动后 scrollTop 一直为 0，同时 top=-xx 为负数，相当于本身是没有滚动条的，这个逻辑是正确的。
    * document.documentElement 向下滚动后 scrollTop/top 都在变化，会影响计算逻辑，所以这里写死 0
    */
   if (node === document.documentElement) {
