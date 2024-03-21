@@ -374,7 +374,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
   //  - react17 中，如果弹窗 mousedown 阻止了 e.stopPropagation(), 那么 document 就不会监听到事件，因为事件冒泡到挂载节点 rootElement 就中断了。
   //  - https://reactjs.org/blog/2020/08/10/react-v17-rc.html#changes-to-event-delegation
   useListener(
-    document as unknown as HTMLElement,
+    document,
     'mousedown',
     clickEvent,
     false,
@@ -392,7 +392,7 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     }
   };
   useListener(
-    document as unknown as HTMLElement,
+    document,
     'keydown',
     keydownEvent,
     false,
@@ -406,9 +406,9 @@ const Overlay = React.forwardRef<HTMLDivElement, OverlayProps>((props, ref) => {
     updatePosition();
   };
   useListener(
-    overflowRef.current,
+    overflowRef.current?.map((t) => (t === document.documentElement ? document : t)),
     'scroll',
-    scrollEvent as any,
+    scrollEvent,
     false,
     !!(visible && overlayRef.current && overflowRef.current?.length)
   );

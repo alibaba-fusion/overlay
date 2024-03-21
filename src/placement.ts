@@ -1,5 +1,5 @@
 import { CSSProperties } from 'react';
-import { getViewTopLeft, getViewPort, getWidthHeight } from './utils';
+import { getViewTopLeft, getViewPort, getWidthHeight, getRect } from './utils';
 
 type point = 'tl' | 'tc' | 'tr' | 'cl' | 'cc' | 'cr' | 'bl' | 'bc' | 'br';
 export type pointsType = [point, point];
@@ -658,7 +658,7 @@ export default function getPlacements(config: PlacementsConfig): PositionResult 
     // result.style.top = 0;
 
     for (const node of scrollNode) {
-      const { top, left, width, height } = node.getBoundingClientRect();
+      const { top, left, width, height } = getRect(node);
       if (
         ttop + theight < top ||
         ttop > top + height ||
