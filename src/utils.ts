@@ -214,8 +214,8 @@ function isScrollableElement(element: Element) {
 }
 
 export function getRect(target: HTMLElement) {
-  if (target === document.documentElement) {
-    const { clientWidth: width, clientHeight: height } = target;
+  if (target === document.documentElement || target === document.body) {
+    const { clientWidth: width, clientHeight: height } = document.documentElement;
     return {
       left: 0,
       top: 0,
