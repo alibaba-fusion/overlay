@@ -46,6 +46,14 @@ export interface PopupProps {
   children?: ReactElement;
   style?: CSSProperties;
   delay?: number;
+  /**
+   * 鼠标放置后的延时显示，单位毫秒 ms
+   */
+  mouseEnterDelay?: number;
+  /**
+   * 鼠标离开后的延时显示，单位毫秒 ms
+   */
+  mouseLeaveDelay?: number;
   overlayProps?: any;
   safeNode?: Array<() => Element>;
   beforePosition?: Function;
@@ -83,6 +91,8 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
     placement = 'bl',
     canCloseByTrigger = true,
     delay = 200,
+    mouseEnterDelay,
+    mouseLeaveDelay,
     overlayProps = {},
     safeNode,
     followTrigger = false,
@@ -149,7 +159,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
         mouseEnterTimer.current = setTimeout(() => {
           handleVisibleChange(true, e, targetType);
           mouseEnterTimer.current = null;
-        }, delay);
+        }, mouseEnterDelay ?? delay);
       }
     };
   };
@@ -160,7 +170,7 @@ const Popup = React.forwardRef((props: PopupProps, ref) => {
         mouseLeaveTimer.current = setTimeout(() => {
           handleVisibleChange(false, e, targetType);
           mouseLeaveTimer.current = null;
-        }, delay);
+        }, mouseLeaveDelay ?? delay);
       }
 
       if (mouseEnterTimer.current && !visible) {
