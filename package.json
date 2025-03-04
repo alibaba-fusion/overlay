@@ -1,6 +1,6 @@
 {
   "name": "@alifd/overlay",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "overlay base component",
   "files": [
     "demo/",
@@ -67,7 +67,7 @@
     "url": "https://github.com/alibaba-fusion/overlay.git"
   },
   "license": "MIT",
-  "homepage": "https://unpkg.com/@alifd/overlay@0.3.6/build/index.html",
+  "homepage": "https://unpkg.com/@alifd/overlay@0.3.7/build/index.html",
   "lint-staged": {
     "@(src|scripts|docs/*/demo)/**/*.@(js|jsx|ts|tsx|md)": [
       "prettier --write"
